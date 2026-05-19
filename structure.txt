@@ -1,0 +1,90 @@
+/src
+
+  /engine                        ← Pure JS. Zero React. Fully testable.
+    gameState.js                 ← Shape of ALL possible state
+    levelParser.js               ← Grid string/array → initial game state
+    movement.js                  ← movePlayer, movePlayer2, pushBox
+    collision.js                 ← isWall, canMove, isCrackTile, etc.
+    winCondition.js              ← checkWin, checkLose (per-level overridable)
+    tokenSystem.js               ← earn, spend, getBalance (used by L4,L7,L9,L10)
+    fogOfWar.js                  ← compute visible cells from player pos (L2)
+    botLogic.js                  ← reserved for L3 if coop becomes single-player
+    historyStack.js              ← undo system, move counter
+
+  /levels
+    /hub
+      hubMap.js                  ← the free-roam world map data
+      hubLogic.js                ← proximity detection, entry triggers
+    /level1
+      map.js                     ← grid data
+      logic.js                   ← level-specific rules & tutorial clue config
+    /level2
+      map.js
+      logic.js                   ← fog radius, switch tile location
+    /level3
+      map.js
+      logic.js                   ← coop config (P2 controls, shared win condition)
+    /level4
+      rounds.js                  ← array of 3 sub-maps + final map
+      logic.js                   ← token gates, strength requirement config
+    /level5
+      map.js
+      logic.js                   ← simon-says sequence definition
+    /level6
+      map.js
+      logic.js                   ← council text config, box ordering rules
+    /level7
+      map.js
+      logic.js                   ← box value map, crack tile positions & triggers
+    /level8
+      map.js
+      logic.js                   ← hint unlock thresholds (after N fails)
+    /level9
+      rounds.js
+      logic.js                   ← token type rules, shop config, blue-gate config
+    /level10
+      rounds.js
+      logic.js                   ← purchase-detection fail condition
+    index.js                     ← exports all levels as ordered array
+
+  /components
+    /layout
+      PageShell.jsx              ← the 3-col layout (left bg | field | right bg)
+      PlayingField.jsx           ← the 3-row layout (top strip | canvas | bottom strip)
+      TopStrip.jsx               ← receives { message, mode } — renders text/councils
+      BottomStrip.jsx            ← receives { tokens, shopItems } — renders HUD/shop
+    /canvas
+      GameBoard.jsx              ← renders the grid
+      Cell.jsx                   ← one tile (wall/floor/target/crack/switch/etc.)
+      PlayerSprite.jsx           ← animated sprite, accepts spriteSheet config
+      BoxSprite.jsx              ← box entity, supports value/color variants
+    /hub
+      HubScene.jsx               ← free-roam world
+      LevelDoor.jsx              ← portal + proximity trigger + mini-challenge modal
+    /ui
+      Modal.jsx                  ← generic modal (used for entry challenge, win screen)
+      TokenDisplay.jsx           ← reusable token counter
+      ShopPanel.jsx              ← reusable shop UI (L4, L9, L10)
+      CouncilPanel.jsx           ← two-column advice display (L6)
+      HintPanel.jsx              ← hint reveal system (L8)
+
+  /hooks
+    useGameEngine.js             ← main bridge: state + dispatch + keyboard input
+    useKeyboard.js               ← raw key capture, supports P1 and P2 bindings
+    useFogOfWar.js               ← derives visible cell set from state (L2)
+    useTokens.js                 ← token balance, shop transactions
+    useRounds.js                 ← manages sub-level round progression (L4, L9, L10)
+
+  /config
+    spriteConfig.js              ← sprite sheet coords, animation frame definitions
+    levelConfig.js               ← master list: level id, name, which logic module
+    themeConfig.js               ← colours, background images per level
+
+  /assets
+    /sprites                     ← your sprite sheet(s)
+    /tiles                       ← wall, floor, target, crack tile images
+    /sounds                      ← optional, placeholder for later
+    /backgrounds                 ← hub world and level backgrounds
+
+  App.jsx                        ← scene router: hub | level | win
+  index.js
