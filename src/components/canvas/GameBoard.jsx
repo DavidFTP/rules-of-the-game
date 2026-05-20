@@ -3,7 +3,7 @@ import { T } from '../../engine/constants.js'
 import { getVisibleCells } from '../../engine/fogOfWar.js'
 import styles from './GameBoard.module.css'
 
-const CS = 52  // cell size in pixels
+const CS = 68  // cell size in pixels
 
 export default function GameBoard({ state }) {
   const canvasRef    = useRef(null)
@@ -23,7 +23,7 @@ export default function GameBoard({ state }) {
     const container = containerRef.current
     const cw = container.clientWidth
     const ch = container.clientHeight
-    const scale = Math.min(cw / canvas.width, ch / canvas.height, 1)
+    const scale = Math.min(cw / canvas.width, ch / canvas.height) * 0.92
     canvas.style.transform       = `scale(${scale})`
     canvas.style.transformOrigin = 'top left'
     canvas.style.position        = 'absolute'

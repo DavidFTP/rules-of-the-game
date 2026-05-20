@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import GameBoard from '../canvas/GameBoard.jsx'
-import TopStrip  from '../layout/TopStrip.jsx'
-import BottomStrip from '../layout/BottomStrip.jsx'
-import { WinModal, CrackLoseModal, ComingSoonModal } from '../ui/GameModals.jsx'
+import GameBoard     from '../canvas/GameBoard.jsx'
+import TopStrip      from '../layout/TopStrip.jsx'
+import BottomStrip   from '../layout/BottomStrip.jsx'
+import TouchControls from '../ui/TouchControls.jsx'
+import { WinModal, CrackLoseModal, ComingSoonModal, RoundWinModal } from '../ui/GameModals.jsx'
 import { useGameEngine } from '../../hooks/useGameEngine.js'
 import { useTokens }     from '../../hooks/useTokens.js'
 import LEVELS from '../../levels/index.js'
@@ -10,15 +11,32 @@ import styles from './LevelScreen.module.css'
 
 export default function LevelScreen({ levelNum, onHub }) {
   const levelData = LEVELS[levelNum]
-  const [showWin,   setShowWin]   = useState(false)
-  const [showCrack, setShowCrack] = useState(false)
+
+  const [showLevelWin,   setShowLevelWin]   = useState(false)
+  const [showRoundWin,   setShowRoundWin]   = useState(false)
+  const [showCrack,      setShowCrack]      = useState(false)
+  const [completedRound, setCompletedRound] = useState(null)
+
   const { bag, buy, purchases } = useTokens()
 
-  const { state, restarts, won, handleRestart } = useGameEngine(levelNum, () => {
-    setTimeout(() => setShowWin(true), 500)
+  const {
+    state,
+    restarts,
+    roundIndex,
+    totalRounds,
+    carriedTokens,
+    advanceRound,
+    handleRestart,
+  } = useGameEngine(levelNum, {
+    onRoundWin: (idx) => {
+      setCompletedRound(idx)
+      setTimeout(() => setShowRoundWin(true), 500)
+    },
+    onLevelWin: () => {
+      setTimeout(() => setShowLevelWin(true), 500)
+    },
   })
 
-  // Watch for crack lose condition
   useEffect(() => {
     if (state?._crackLose) setShowCrack(true)
   }, [state?._crackLose])
@@ -26,12 +44,28 @@ export default function LevelScreen({ levelNum, onHub }) {
   if (!levelData) {
     return (
       <div className={styles.wrap}>
-        <ComingSoonModal levelNum={levelNum} onHub={onHub} />
+        <div className={styles.canvas} id="canvas-touch-area">
+          <ComingSoonModal levelNum={levelNum} onHub={onHub} />
+        </div>
       </div>
     )
   }
 
   const config = levelData.config
+  const isCoop = !!config?.coop
+
+  // Touch move dispatcher — routes to correct player
+  function handleTouchMove(key) {
+    // Simulate a keydown event the engine hook will pick up
+    const event = new KeyboardEvent('keydown', { key, bubbles: true })
+    window.dispatchEvent(event)
+  }
+
+  function handleNextRound() {
+    setShowRoundWin(false)
+    setCompletedRound(null)
+    advanceRound()
+  }
 
   return (
     <div className={styles.wrap}>
@@ -40,18 +74,31 @@ export default function LevelScreen({ levelNum, onHub }) {
         state={state}
         levelNum={levelNum}
         restarts={restarts}
+        roundIndex={roundIndex}
+        totalRounds={totalRounds}
       />
 
-      <div className={styles.canvas}>
+      <div className={styles.canvas} id="canvas-touch-area">
         <GameBoard state={state} />
 
-        {showWin && (
-          <WinModal
-            levelNum={levelNum}
-            tokens={state?.tokens ?? 0}
-            onHub={() => { setShowWin(false); onHub() }}
+        {showRoundWin && !showLevelWin && (
+          <RoundWinModal
+            roundNum={completedRound + 1}
+            totalRounds={totalRounds}
+            tokens={carriedTokens}
+            onNext={handleNextRound}
+            onHub={onHub}
           />
         )}
+
+        {showLevelWin && (
+          <WinModal
+            levelNum={levelNum}
+            tokens={carriedTokens}
+            onHub={() => { setShowLevelWin(false); onHub() }}
+          />
+        )}
+
         {showCrack && (
           <CrackLoseModal
             onRetry={() => { setShowCrack(false); handleRestart() }}
@@ -66,6 +113,23 @@ export default function LevelScreen({ levelNum, onHub }) {
         tokenBag={bag}
         purchases={purchases}
         onBuy={buy}
+        roundIndex={roundIndex}
+        totalRounds={totalRounds}
+        carriedTokens={carriedTokens}
+      />
+
+      {/* Mobile touch controls — hidden on desktop via CSS media query */}
+      <TouchControls
+        onMove={handleTouchMove}
+        onUndo={() => handleTouchMove('z')}
+        onRestart={() => handleTouchMove('r')}
+        onHub={onHub}
+        showP2={isCoop}
+        onMoveP2={(key) => {
+          const p2map = { ArrowUp: 'w', ArrowDown: 's', ArrowLeft: 'a', ArrowRight: 'd' }
+          const event = new KeyboardEvent('keydown', { key: p2map[key] ?? key, bubbles: true })
+          window.dispatchEvent(event)
+        }}
       />
     </div>
   )
