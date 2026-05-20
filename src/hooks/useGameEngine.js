@@ -7,64 +7,124 @@ import { useKeyboard } from './useKeyboard.js'
 import LEVELS from '../levels/index.js'
 
 /**
- * useGameEngine(levelNum, onWin)
+ * buildStateForRound(levelData, roundIndex)
  *
- * Central hook wiring together: parsing, movement, undo, win detection,
- * Simon-Says validation, and keyboard input.
- *
- * Returns: { state, restarts, won, handleRestart }
+ * Works for both single-map levels and multi-round levels.
+ * For multi-round, reads levelData.rounds[roundIndex].
+ * Overrides (boxes, targets, playerStart) can live on the round object
+ * OR on the level root — round-level values take priority.
  */
-export function useGameEngine(levelNum, onWin) {
+function buildStateForRound(levelData, roundIndex = 0) {
+  if (!levelData) return null
+
+  const isMulti  = Array.isArray(levelData.rounds)
+  const round    = isMulti ? levelData.rounds[roundIndex] : null
+  const mapLines = round?.map ?? levelData.map
+
+  if (!mapLines) return null
+
+  // Round-level overrides beat level-root overrides
+  const parsed = parseMap(mapLines, {
+    boxes:        round?.boxes        ?? levelData.boxes,
+    targets:      round?.targets      ?? levelData.targets,
+    playerStart:  round?.playerStart  ?? levelData.playerStart,
+    player2Start: round?.player2Start ?? levelData.player2Start,
+  })
+
+  return {
+    ...parsed,
+    config:       levelData.config,
+    fogLifted:    !(levelData.config?.fogOfWar),
+    placedOrder:  [],
+    simonStep:    0,
+    roundIndex,
+    totalRounds:  isMulti ? levelData.rounds.length : 1,
+    isFinalRound: isMulti ? roundIndex === levelData.rounds.length - 1 : true,
+  }
+}
+
+/**
+ * useGameEngine(levelNum, { onRoundWin, onLevelWin })
+ *
+ * onRoundWin(roundIndex) — called when a non-final round is solved
+ * onLevelWin()           — called when the final (or only) round is solved
+ *
+ * Exposes:
+ *   state         — current game state
+ *   restarts      — restart counter for hint unlock
+ *   roundIndex    — which round we're on (0-based)
+ *   totalRounds   — how many rounds this level has
+ *   advanceRound  — call this after showing the between-round screen
+ *   handleRestart — restart current round
+ */
+export function useGameEngine(levelNum, { onRoundWin, onLevelWin } = {}) {
   const levelData = LEVELS[levelNum]
 
-  function buildInitialState() {
-    if (!levelData) return null
-    const mapLines = levelData.rounds
-      ? levelData.rounds[0].map
-      : levelData.map
+  const [roundIndex, setRoundIndex] = useState(0)
+  const [state,      setState]      = useState(() => buildStateForRound(levelData, 0))
+  const [history,    setHistory]    = useState([])
+  const [restarts,   setRestarts]   = useState(0)
+  // Tokens carry across rounds
+  const [carriedTokens, setCarriedTokens] = useState(0)
 
-    if (!mapLines) return null
+  const wonRef      = useRef(false)
+  const roundWonRef = useRef(false)
 
-    const parsed = parseMap(mapLines, {
-      boxes:        levelData.boxes,
-      targets:      levelData.targets,
-      playerStart:  levelData.playerStart,
-      player2Start: levelData.player2Start,
-    })
-
-    return {
-      ...parsed,
-      config:      levelData.config,
-      fogLifted:   !(levelData.config?.fogOfWar),
-      placedOrder: [],
-      simonStep:   0,
-    }
-  }
-
-  const [state,    setState]    = useState(buildInitialState)
-  const [history,  setHistory]  = useState([])
-  const [restarts, setRestarts] = useState(0)
-  const [won,      setWon]      = useState(false)
-  const wonRef = useRef(false)
-
-  // Win detection runs after every state change
+  // Reset everything when levelNum changes
   useEffect(() => {
-    if (!state || wonRef.current) return
-    if (checkWin(state)) {
+    wonRef.current      = false
+    roundWonRef.current = false
+    setRoundIndex(0)
+    setCarriedTokens(0)
+    setHistory([])
+    setRestarts(0)
+    setState(buildStateForRound(LEVELS[levelNum], 0))
+  }, [levelNum])
+
+  // Win detection after every state change
+  useEffect(() => {
+    if (!state || wonRef.current || roundWonRef.current) return
+    if (!checkWin(state)) return
+
+    roundWonRef.current = true
+    const earned = state.tokens ?? 0
+    setCarriedTokens(prev => prev + earned)
+
+    if (state.isFinalRound) {
       wonRef.current = true
-      setWon(true)
-      onWin?.()
+      onLevelWin?.()
+    } else {
+      onRoundWin?.(state.roundIndex)
     }
-  }, [state, onWin])
+  }, [state, onRoundWin, onLevelWin])
+
+  /** Move to the next round. Call this from the UI after showing a between-round screen. */
+  const advanceRound = useCallback(() => {
+    const nextIdx = roundIndex + 1
+    const ld = LEVELS[levelNum]
+    if (!ld?.rounds || nextIdx >= ld.rounds.length) return
+
+    roundWonRef.current = false
+    setRoundIndex(nextIdx)
+    setHistory([])
+    setState(prev => {
+      const fresh = buildStateForRound(ld, nextIdx)
+      if (!fresh) return prev
+      // Carry tokens forward
+      return { ...fresh, tokens: carriedTokens }
+    })
+  }, [roundIndex, levelNum, carriedTokens])
 
   const handleRestart = useCallback(() => {
-    wonRef.current = false
-    setWon(false)
+    wonRef.current      = false
+    roundWonRef.current = false
     setHistory([])
     setRestarts(r => r + 1)
-    setState(buildInitialState())
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [levelNum])
+    setState(() => {
+      const fresh = buildStateForRound(LEVELS[levelNum], roundIndex)
+      return fresh ? { ...fresh, tokens: carriedTokens } : null
+    })
+  }, [levelNum, roundIndex, carriedTokens])
 
   const handleUndo = useCallback(() => {
     setHistory(h => {
@@ -75,47 +135,41 @@ export function useGameEngine(levelNum, onWin) {
   }, [])
 
   const handleMove = useCallback((key, playerKey) => {
-    if (wonRef.current) return
+    if (wonRef.current || roundWonRef.current) return
 
     setState(current => {
       if (!current) return current
 
-      // ── Simon Says validation (Level 5) ──
-      const config = current.config
-      if (config?.topStripMode === 'simon') {
-        const seq  = config.simonSequence ?? []
+      // Simon Says: wrong key resets progress without moving
+      const cfg = current.config
+      if (cfg?.topStripMode === 'simon') {
+        const seq  = cfg.simonSequence ?? []
         const step = current.simonStep ?? 0
         if (step < seq.length && key !== seq[step]) {
-          // Wrong key — reset simon progress, don't move
           return { ...current, simonStep: 0 }
         }
       }
 
-      // Save to history before moving
       setHistory(h => pushHistory(h, current))
-
       const next = moveEntity(current, key, playerKey)
 
-      // Advance Simon step if correct key was pressed
-      if (config?.topStripMode === 'simon') {
-        const seq  = config.simonSequence ?? []
+      // Advance Simon step
+      if (cfg?.topStripMode === 'simon') {
+        const seq  = cfg.simonSequence ?? []
         const step = current.simonStep ?? 0
-        if (step < seq.length) {
-          return { ...next, simonStep: step + 1 }
-        }
+        if (step < seq.length) return { ...next, simonStep: step + 1 }
       }
 
-      // Track placed order for ordered-win levels (L1, L6)
-      if (config?.enforceOrder) {
+      // Track box placement order (L1 grey-last, L6 council order)
+      if (cfg?.enforceOrder) {
         const justPlaced = next.boxes.filter(
           (b, i) => b.onTarget && !current.boxes[i]?.onTarget
         )
         if (justPlaced.length > 0) {
-          const newOrder = [
-            ...(current.placedOrder ?? []),
-            ...justPlaced.map(b => b.type),
-          ]
-          return { ...next, placedOrder: newOrder }
+          return {
+            ...next,
+            placedOrder: [...(current.placedOrder ?? []), ...justPlaced.map(b => b.type)],
+          }
         }
       }
 
@@ -123,20 +177,27 @@ export function useGameEngine(levelNum, onWin) {
     })
   }, [])
 
-  // Keyboard wiring
+  // Keyboard
   useKeyboard(({ key, isP1, isP2, isAction }) => {
     if (isAction) {
       if (key === 'r' || key === 'R') { handleRestart(); return }
       if (key === 'z' || key === 'Z') { handleUndo();    return }
     }
-    if (isP1) {
-      handleMove(key, 'playerPos')
-    }
+    if (isP1) handleMove(key, 'playerPos')
     if (isP2 && state?.config?.coop) {
-      const p2map = { w: 'ArrowUp', s: 'ArrowDown', a: 'ArrowLeft', d: 'ArrowRight' }
-      handleMove(p2map[key.toLowerCase()] ?? key, 'player2Pos')
+      const map = { w: 'ArrowUp', s: 'ArrowDown', a: 'ArrowLeft', d: 'ArrowRight' }
+      handleMove(map[key.toLowerCase()] ?? key, 'player2Pos')
     }
-  }, !!state && !won)
+  }, !!state && !wonRef.current)
 
-  return { state, restarts, won, handleRestart }
+  return {
+    state,
+    restarts,
+    roundIndex,
+    totalRounds: state?.totalRounds ?? 1,
+    isFinalRound: state?.isFinalRound ?? true,
+    carriedTokens,
+    advanceRound,
+    handleRestart,
+  }
 }
