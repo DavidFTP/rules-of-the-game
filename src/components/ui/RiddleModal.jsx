@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Modal, { ModalTitle, ModalBody, ModalError, Btn } from './Modal.jsx'
-import { hubRiddles } from '../../levels/hub/hubData.js'
+import { hubRiddles } from '../../levels/hub/hubMap.js'
 
 export default function RiddleModal({ door, onSuccess, onClose }) {
   const riddle  = hubRiddles.find(r => r.id === door.id) ?? hubRiddles[0]
