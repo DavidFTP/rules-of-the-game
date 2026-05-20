@@ -1,0 +1,82 @@
+/* Only shown on touch devices */
+.wrap {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 12px;
+  background: rgba(0,0,0,0.6);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+@media (pointer: coarse) {
+  .wrap { display: flex; }
+}
+
+/* Action buttons row */
+.actionRow {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.actionBtn {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  color: #ccc;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.actionBtn:active { background: rgba(255,255,255,0.2); }
+
+/* D-pad layout */
+.padsRow {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  justify-content: center;
+}
+
+.dpadWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.dpadLabel {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: rgba(255,255,255,0.4);
+}
+
+.dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 52px);
+  grid-template-rows:    repeat(3, 52px);
+  gap: 3px;
+}
+
+.dpadBtn {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.08s;
+}
+.dpadBtn:active { background: rgba(255,255,255,0.28); transform: scale(0.94); }

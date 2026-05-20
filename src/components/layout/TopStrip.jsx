@@ -1,45 +1,51 @@
 import React from 'react'
 import styles from './TopStrip.module.css'
 
-export default function TopStrip({ config, state, levelNum, restarts }) {
-  if (!config) return <DefaultStrip levelNum={levelNum} state={state} />
+export default function TopStrip({ config, state, levelNum, restarts, roundIndex, totalRounds }) {
+  const roundInfo = totalRounds > 1
+    ? <span className={styles.roundBadge}>Round {(roundIndex ?? 0) + 1}/{totalRounds}</span>
+    : null
+
+  if (!config) return <DefaultStrip levelNum={levelNum} state={state} roundInfo={roundInfo} />
 
   switch (config.topStripMode) {
-    case 'marquee':  return <MarqueeStrip  config={config} state={state} levelNum={levelNum} />
-    case 'narrative':return <NarrativeStrip config={config} state={state} levelNum={levelNum} />
-    case 'council':  return <CouncilStrip  config={config} />
-    case 'simon':    return <SimonStrip    config={config} state={state} levelNum={levelNum} />
-    case 'hints':    return <HintsStrip    config={config} restarts={restarts} />
-    default:         return <DefaultStrip  levelNum={levelNum} state={state} />
+    case 'marquee':  return <MarqueeStrip   config={config} state={state} levelNum={levelNum} roundInfo={roundInfo} />
+    case 'narrative':return <NarrativeStrip config={config} state={state} levelNum={levelNum} roundInfo={roundInfo} />
+    case 'council':  return <CouncilStrip   config={config} roundInfo={roundInfo} />
+    case 'simon':    return <SimonStrip     config={config} state={state}  levelNum={levelNum} roundInfo={roundInfo} />
+    case 'hints':    return <HintsStrip     config={config} restarts={restarts} roundInfo={roundInfo} />
+    default:         return <DefaultStrip   levelNum={levelNum} state={state} roundInfo={roundInfo} />
   }
 }
 
-function DefaultStrip({ levelNum, state }) {
+function DefaultStrip({ levelNum, state, roundInfo }) {
   return (
     <div className={styles.strip}>
       <span className={styles.title}>{levelNum ? `LVL ${levelNum}` : 'THE WAY'}</span>
+      {roundInfo}
       <span className={styles.text}>Use arrow keys to move. Push boxes onto the targets.</span>
       <span className={styles.meta}>Moves: <em>{state?.moves ?? 0}</em></span>
     </div>
   )
 }
 
-function NarrativeStrip({ config, state, levelNum }) {
+function NarrativeStrip({ config, state, levelNum, roundInfo }) {
   return (
     <div className={styles.strip}>
       <span className={styles.title}>LVL {levelNum}</span>
+      {roundInfo}
       <span className={styles.text}>{config.narrativeText}</span>
       <span className={styles.meta}>Moves: <em>{state?.moves ?? 0}</em></span>
     </div>
   )
 }
 
-// Marquee: scrolling tutorial text with gold-highlighted clue
-function MarqueeStrip({ config, state, levelNum }) {
+function MarqueeStrip({ config, state, levelNum, roundInfo }) {
   const segments = config.tutorialSegments ?? []
   return (
     <div className={styles.strip}>
       <span className={styles.title}>LVL {levelNum}</span>
+      {roundInfo}
       <div className={styles.marqueeWrap}>
         <div className={styles.marqueeTrack}>
           {segments.map((seg, i) =>
@@ -54,10 +60,10 @@ function MarqueeStrip({ config, state, levelNum }) {
   )
 }
 
-// Council: two-column split for Level 6
-function CouncilStrip({ config }) {
+function CouncilStrip({ config, roundInfo }) {
   return (
     <div className={`${styles.strip} ${styles.councilWrap}`}>
+      {roundInfo && <span className={styles.title} style={{flexShrink:0}}>{roundInfo}</span>}
       <div className={`${styles.council} ${styles.worldCouncil}`}>
         <div className={styles.councilLabel}>THE WORLD SAYS</div>
         {config.council?.worldSays}
@@ -70,25 +76,19 @@ function CouncilStrip({ config }) {
   )
 }
 
-// Simon: shows the sequence with colour-coded progress
-function SimonStrip({ config, state, levelNum }) {
+function SimonStrip({ config, state, levelNum, roundInfo }) {
   const seq  = config.simonSequence ?? []
   const done = state?.simonStep ?? 0
-  const arrowMap = {
-    ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→'
-  }
+  const arrowMap = { ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→' }
   return (
     <div className={styles.strip}>
       <span className={styles.title}>LVL {levelNum}</span>
+      {roundInfo}
       <div className={styles.simonSeq}>
         {seq.map((k, i) => (
           <span
             key={i}
-            className={
-              i < done    ? styles.simonDone  :
-              i === done  ? styles.simonNext  :
-              styles.simonPending
-            }
+            className={i < done ? styles.simonDone : i === done ? styles.simonNext : styles.simonPending}
           >
             {arrowMap[k] ?? k}
           </span>
@@ -99,19 +99,18 @@ function SimonStrip({ config, state, levelNum }) {
   )
 }
 
-// Hints: unlocks progressively after restarts
-function HintsStrip({ config, restarts }) {
+function HintsStrip({ config, restarts, roundInfo }) {
   const threshold = config.hintThreshold ?? 3
-  const hints = config.hints ?? []
-  const hintIdx = Math.min(restarts - threshold, hints.length - 1)
-  const showHint = restarts >= threshold && hintIdx >= 0
-
+  const hints     = config.hints ?? []
+  const hintIdx   = Math.min(restarts - threshold, hints.length - 1)
+  const showHint  = restarts >= threshold && hintIdx >= 0
   return (
     <div className={styles.strip}>
       <span className={styles.title}>LVL 8</span>
+      {roundInfo}
       <span className={styles.text}>
         {showHint
-          ? <>💡 <strong>Hint:</strong> {hints[hintIdx]}</>
+          ? <><strong>💡 Hint:</strong> {hints[hintIdx]}</>
           : 'Think carefully before you push... every move counts.'}
       </span>
       <span className={styles.meta}>Tries: <em>{restarts}</em></span>
