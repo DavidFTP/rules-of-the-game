@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react'
-import { hubMap, hubDoors, hubPlayerStart } from '../../levels/hub/hubMap.js'
+import { hubMap, hubDoors, hubPlayerStart } from '../../levels/hub/hubData.js'
 import { useKeyboard } from '../../hooks/useKeyboard.js'
 import styles from './HubScene.module.css'
 
