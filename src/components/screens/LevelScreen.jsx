@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 import GameBoard   from '../canvas/GameBoard.jsx'
 import TopStrip    from '../layout/TopStrip.jsx'
 import BottomStrip from '../layout/BottomStrip.jsx'
@@ -27,7 +27,6 @@ export default function LevelScreen({ levelNum, onHub }) {
 
   const [showLevelWin,   setShowLevelWin]   = useState(false)
   const [showRoundWin,   setShowRoundWin]   = useState(false)
-  const [showCrack,      setShowCrack]      = useState(false)
   const [showTutorial,   setShowTutorial]   = useState(false) // <-- New State
   const [completedRound, setCompletedRound] = useState(null)
 
@@ -46,14 +45,13 @@ export default function LevelScreen({ levelNum, onHub }) {
   } = useGameEngine(levelNum, {
     onRoundWin: (idx) => { setCompletedRound(idx); setTimeout(() => setShowRoundWin(true), 500) },
     onLevelWin: ()    => { setTimeout(() => setShowLevelWin(true), 500) },
+    onEscapeRequest: onHub,
   })
+
+  const showCrack = !!state?._crackLose
 
   // Swipe anywhere on the canvas moves P1
   useSwipe(canvasAreaRef, (arrowKey) => handleMove?.(arrowKey, 'playerPos'))
-
-  useEffect(() => {
-    if (state?._crackLose) setShowCrack(true)
-  }, [state?._crackLose])
 
   if (!levelData) {
     return (
@@ -153,8 +151,8 @@ export default function LevelScreen({ levelNum, onHub }) {
         )}
         {showCrack && (
           <CrackLoseModal
-            onRetry={() => { setShowCrack(false); handleRestart() }}
-            onHub={() => { setShowCrack(false); onHub() }}
+            onRetry={handleRestart}
+            onHub={onHub}
           />
         )}
       </div>

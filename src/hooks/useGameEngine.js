@@ -55,9 +55,9 @@ function buildStateForRound(levelData, roundIndex = 0) {
  *   roundIndex    — which round we're on (0-based)
  *   totalRounds   — how many rounds this level has
  *   advanceRound  — call this after showing the between-round screen
- *   handleRestart — restart current round
+ *   handleRestart — restart the level from round 1
  */
-export function useGameEngine(levelNum, { onRoundWin, onLevelWin } = {}) {
+export function useGameEngine(levelNum, { onRoundWin, onLevelWin, onEscapeRequest } = {}) {
   const levelData = LEVELS[levelNum]
 
   const [roundIndex, setRoundIndex] = useState(0)
@@ -120,11 +120,10 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin } = {}) {
     roundWonRef.current = false
     setHistory([])
     setRestarts(r => r + 1)
-    setState(() => {
-      const fresh = buildStateForRound(LEVELS[levelNum], roundIndex)
-      return fresh ? { ...fresh, tokens: carriedTokens } : null
-    })
-  }, [levelNum, roundIndex, carriedTokens])
+    setRoundIndex(0)
+    setCarriedTokens(0)
+    setState(() => buildStateForRound(LEVELS[levelNum], 0))
+  }, [levelNum])
 
   const handleUndo = useCallback(() => {
     setHistory(h => {
@@ -180,6 +179,10 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin } = {}) {
   // Keyboard
   useKeyboard(({ key, isP1, isP2, isAction }) => {
     if (isAction) {
+      if (key === 'Escape') {
+        onEscapeRequest?.()
+        return
+      }
       if (key === 'r' || key === 'R') { handleRestart(); return }
       if (key === 'z' || key === 'Z') { handleUndo();    return }
     }
