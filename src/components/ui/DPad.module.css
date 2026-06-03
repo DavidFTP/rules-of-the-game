@@ -1,0 +1,40 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.label {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: rgba(255,255,255,0.4);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 58px);
+  grid-template-rows:    repeat(3, 58px);
+  gap: 4px;
+}
+
+.btn {
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.24);
+  border-radius: 12px;
+  color: #fff;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.btnPressed {
+  background: rgba(255,255,255,0.35) !important;
+  transform: scale(0.88);
+}
