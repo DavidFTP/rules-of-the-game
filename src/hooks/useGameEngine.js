@@ -33,7 +33,7 @@ function buildStateForRound(levelData, roundIndex = 0) {
 
   return {
     ...parsed,
-    config:       levelData.config,
+    config:       { ...(levelData.config ?? {}), ...(round?.config ?? {}) },
     fogLifted:    !(levelData.config?.fogOfWar),
     placedOrder:  [],
     simonStep:    0,
@@ -199,5 +199,7 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin } = {}) {
     carriedTokens,
     advanceRound,
     handleRestart,
+    handleMove,
+    handleUndo,
   }
 }
