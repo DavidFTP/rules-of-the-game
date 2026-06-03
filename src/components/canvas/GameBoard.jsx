@@ -73,7 +73,7 @@ function drawFrame(ctx, state) {
   // Targets
   targets.forEach(t => {
     const inFog = visible && !visible.has(`${t.r},${t.c}`)
-    if (!inFog) drawTarget(ctx, t.r, t.c)
+    if (!inFog) drawTarget(ctx, t)
   })
 
   // Boxes
@@ -107,7 +107,12 @@ function drawCell(ctx, type, r, c, inFog, specials) {
     return
   }
   if (type === T.WALL) {
+    const isGate = specials?.some(s => s.type === 'gate' && s.r === r && s.c === c)
+    if (isGate) {
+      drawGate(ctx, x, y)
+    } else {
     drawWall(ctx, x, y)
+    }
   } else if (type === T.CRACK) {
     drawCrack(ctx, x, y)
   } else if (type === T.SWITCH) {
@@ -157,17 +162,40 @@ function drawSwitch(ctx, x, y, active) {
   ctx.fillText(active ? 'ON' : 'SW', x + CS / 2, y + CS / 2 + 5)
 }
 
-function drawTarget(ctx, r, c) {
-  const x = c * CS, y = r * CS
-  ctx.fillStyle = 'rgba(76,175,80,0.18)'
-  ctx.fillRect(x + 4, y + 4, CS - 8, CS - 8)
-  ctx.strokeStyle = '#4caf50'
-  ctx.lineWidth = 2
-  const mx = x + CS/2, my = y + CS/2, hs = CS/2 - 9
-  ctx.beginPath()
-  ctx.moveTo(mx, my - hs); ctx.lineTo(mx + hs, my)
-  ctx.lineTo(mx, my + hs); ctx.lineTo(mx - hs, my)
-  ctx.closePath(); ctx.stroke()
+function drawTarget(ctx, targetObj) {
+  const { r, c, type } = targetObj;
+  const x = c * CS, y = r * CS;
+  
+  // Look up the color based on the target type, default to green
+  const boxData = type && BOX_COLORS[type] ? BOX_COLORS[type] : BOX_COLORS.green;
+  
+  ctx.fillStyle = boxData.bg;
+  ctx.globalAlpha = 0.3; // Make the background semi-transparent
+  ctx.fillRect(x + 4, y + 4, CS - 8, CS - 8);
+  ctx.globalAlpha = 1.0; 
+
+  ctx.strokeStyle = boxData.mark;
+  ctx.lineWidth = 2;
+  const mx = x + CS/2, my = y + CS/2, hs = CS/2 - 9;
+  ctx.beginPath();
+  ctx.moveTo(mx, my - hs); ctx.lineTo(mx + hs, my);
+  ctx.lineTo(mx, my + hs); ctx.lineTo(mx - hs, my);
+  ctx.closePath(); 
+  ctx.stroke();
+}
+
+function drawGate(ctx, x, y) {
+  // Draw a metallic looking door
+  ctx.fillStyle = '#445566';
+  ctx.fillRect(x, y, CS, CS);
+  ctx.fillStyle = '#223344';
+  ctx.fillRect(x + 4, y + 4, CS - 8, CS - 8);
+  ctx.strokeStyle = '#88aadd';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x + 10, y + CS / 2);
+  ctx.lineTo(x + CS - 10, y + CS / 2);
+  ctx.stroke();
 }
 
 const BOX_COLORS = {

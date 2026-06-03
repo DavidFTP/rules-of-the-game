@@ -59,6 +59,23 @@ export function moveEntity(state, key, playerKey = 'playerPos') {
       }
     }
 
+    // --- CHRONOLOGICAL TRACKING (THE FIX) ---
+    const wasOnTarget = isTarget(targets, pushedBox.r, pushedBox.c);
+    const isNowOnTarget = isTarget(targets, br2, bc2);
+    
+    // Copy the existing timeline, or start a new one if it doesn't exist
+    let newPlacedOrder = state.placedOrder ? [...state.placedOrder] : [];
+
+    if (!wasOnTarget && isNowOnTarget) {
+      // Box just landed on a target -> Add to timeline
+      newPlacedOrder.push(pushedBox.type);
+    } else if (wasOnTarget && !isNowOnTarget) {
+      // Box was pushed OFF a target -> Remove from timeline
+      const idx = newPlacedOrder.lastIndexOf(pushedBox.type);
+      if (idx !== -1) newPlacedOrder.splice(idx, 1);
+    }
+    // ----------------------------------------
+
     const newBoxes = boxes.map((b, i) => {
       if (i !== boxIdx) return b
       return { ...b, r: br2, c: bc2, onTarget: isTarget(targets, br2, bc2) }
@@ -68,6 +85,7 @@ export function moveEntity(state, key, playerKey = 'playerPos') {
       ...state,
       [playerKey]: { r: nr, c: nc },
       boxes: newBoxes,
+      placedOrder: newPlacedOrder, // Inject the updated timeline here
       moves: state.moves + 1,
       _bump: false,
       _crackLose: false,
@@ -76,18 +94,28 @@ export function moveEntity(state, key, playerKey = 'playerPos') {
 
   // Switch interaction
   const swIdx = findSpecialAt(specials, nr, nc)
+  
+  // 🕵️‍♂️ DEBUG: Tell us what you see!
+  if (swIdx !== -1) {
+    console.log("🔍 Stepped on a special item! Type:", specials[swIdx].type);
+  }
+
   if (swIdx !== -1 && specials[swIdx].type === 'switch') {
+    console.log("💡 SWITCH PRESSED! Turning on the lights!");
+    
     const newSpecials = specials.map((s, i) =>
       i === swIdx ? { ...s, active: true } : s
     )
-    return {
+    let nextState = {
       ...state,
       [playerKey]: { r: nr, c: nc },
       specials: newSpecials,
-      fogLifted: true,
+      fogLifted: true, 
       moves: state.moves + 1,
       _bump: false,
     }
+
+    return openGate(nextState); // Open the gate(s) when the switch is pressed
   }
 
   // Coin collection
@@ -112,4 +140,36 @@ export function moveEntity(state, key, playerKey = 'playerPos') {
     _bump: false,
     _crackLose: false,
   }
+}
+
+/**
+ * 🚪 Reusable Gate Opener
+ * Turns a gate into a floor tile. 
+ * Pass a specific gateId to open one gate, or leave it blank to open all gates.
+ */
+export function openGate(state, gateId = null) {
+  let gateFound = false;
+  
+  // Clone the grid so we don't mutate the original state
+  const newGrid = state.grid.map(row => [...row]);
+  
+  // Filter out the gate we are opening
+  const newSpecials = state.specials.filter(s => {
+    if (s.type === 'gate' && (!gateId || s.id === gateId)) {
+      newGrid[s.r][s.c] = 0; // 0 = T.FLOOR. The wall is destroyed!
+      gateFound = true;
+      return false; // Remove the gate from the specials array completely
+    }
+    return true; // Keep all other specials (coins, switches, etc.)
+  });
+
+  // If no gate was found or matched the ID, just return the state unchanged
+  if (!gateFound) return state;
+
+  // Return the shiny new state with the open door
+  return {
+    ...state,
+    grid: newGrid,
+    specials: newSpecials
+  };
 }

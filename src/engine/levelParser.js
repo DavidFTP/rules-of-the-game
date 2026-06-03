@@ -15,6 +15,7 @@ import { T } from './constants.js'
  *   '$'  coin / token pickup
  *   'O'  box already on target (pre-solved)
  *   ' '  floor (space also treated as floor)
+ *   'G'  gate
  *
  * overrides: { boxes, targets, playerStart, player2Start }
  * These let a level's logic.js replace the map-parsed values
@@ -67,6 +68,10 @@ export function parseMap(mapLines, overrides = {}) {
         case '$':
           row.push(T.FLOOR)
           specials.push({ r, c, type: 'coin', amount: 10 })
+          break
+        case 'G':
+          row.push(T.WALL) 
+          specials.push({ r, c, type: 'gate' })
           break
         default:
           row.push(T.FLOOR)
