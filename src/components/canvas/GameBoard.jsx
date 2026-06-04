@@ -97,6 +97,14 @@ function drawFrame(ctx, state) {
 
   // Fog overlay on top of everything
   if (fogOn) drawFogOverlay(ctx, playerPos, rows, cols, config.fogRadius ?? 2.5)
+
+  // Coins
+  specials.forEach(s => {
+    const inFog = visible && !visible.has(`${s.r},${s.c}`);
+    if (!inFog && s.type === 'coin') {
+      drawCoin(ctx, s.c * CS, s.r * CS);
+    }
+  });
 }
 
 function drawCell(ctx, type, r, c, inFog, specials) {
@@ -111,7 +119,19 @@ function drawCell(ctx, type, r, c, inFog, specials) {
     if (isGate) {
       drawGate(ctx, x, y)
     } else {
-    drawWall(ctx, x, y)
+    const isDestructible = specials?.some(s => s.type === 'destructible' && s.r === r && s.c === c);
+    
+    drawWall(ctx, x, y); // Draw the base wall first
+    
+    if (isDestructible) {
+      // Draw red cracks over it so they know they can break it!
+      ctx.strokeStyle = 'rgba(255, 80, 80, 0.9)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x + 10, y + 10); ctx.lineTo(x + CS - 10, y + CS - 10);
+      ctx.moveTo(x + CS - 10, y + 10); ctx.lineTo(x + 10, y + CS - 10);
+      ctx.stroke();
+    }
     }
   } else if (type === T.CRACK) {
     drawCrack(ctx, x, y)
@@ -302,4 +322,26 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.lineTo(x + r, y + h);    ctx.arcTo(x,   y+h, x,   y+h-r, r)
   ctx.lineTo(x,     y + r);    ctx.arcTo(x,   y,   x+r, y,     r)
   ctx.closePath()
+}
+
+
+function drawCoin(ctx, x, y) {
+  const cx = x + CS / 2;
+  const cy = y + CS / 2;
+  
+  // Outer gold ring
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#B8860B';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Inner dollar sign
+  ctx.fillStyle = '#B8860B';
+  ctx.font = 'bold 16px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('$', cx, cy + 1);
 }

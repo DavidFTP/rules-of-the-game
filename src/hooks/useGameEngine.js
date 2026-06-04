@@ -40,6 +40,7 @@ function buildStateForRound(levelData, roundIndex = 0) {
     roundIndex,
     totalRounds:  isMulti ? levelData.rounds.length : 1,
     isFinalRound: isMulti ? roundIndex === levelData.rounds.length - 1 : true,
+    active_Powerups: [],
   }
 }
 
@@ -81,14 +82,17 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin, onEscapeReques
     setState(buildStateForRound(LEVELS[levelNum], 0))
   }, [levelNum])
 
-  // Win detection after every state change
+ // Win detection after every state change
   useEffect(() => {
     if (!state || wonRef.current || roundWonRef.current) return
     if (!checkWin(state)) return
 
     roundWonRef.current = true
-    const earned = state.tokens ?? 0
-    setCarriedTokens(prev => prev + earned)
+    
+    // 🚨 THIS IS THE FIX: Set the bag exactly to what the state has. 
+    // Do NOT use "prev => prev + earned", otherwise it doubles every round!
+    const currentTokens = state.tokens ?? 0;
+    setCarriedTokens(currentTokens);
 
     if (state.isFinalRound) {
       wonRef.current = true
@@ -97,7 +101,6 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin, onEscapeReques
       onRoundWin?.(state.roundIndex)
     }
   }, [state, onRoundWin, onLevelWin])
-
   /** Move to the next round. Call this from the UI after showing a between-round screen. */
   const advanceRound = useCallback(() => {
     const nextIdx = roundIndex + 1
@@ -176,6 +179,43 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin, onEscapeReques
     })
   }, [])
 
+  // --- FIX 1: INSTANT BOMB POWERUP ---
+  const activatePowerup = useCallback((powerupId, cost) => {
+    setState(current => {
+      // Check if they can afford it and don't already have it
+      if ((current.tokens || 0) >= cost && !current.activePowerups?.includes(powerupId)) {
+        
+        let nextState = {
+          ...current,
+          tokens: current.tokens - cost,
+          activePowerups: [...(current.activePowerups || []), powerupId]
+        };
+
+        // 💥 IF IT IS THE BOMB, DESTROY ALL WALLS INSTANTLY!
+        if (powerupId === 'bomb') {
+          // 1. Clone the grid ONCE before making changes
+          const newGrid = nextState.grid.map(row => [...row]);
+          
+          // 2. Find all destructible walls and turn them into floors
+          nextState.specials.forEach(special => {
+            if (special.type === 'destructible') {
+              newGrid[special.r][special.c] = 0; // Turn to floor
+            }
+          });
+
+          // 3. Save the newly cleared grid back to the state
+          nextState.grid = newGrid;
+          
+          // 4. Filter out ALL destructible walls from the specials array in one clean sweep
+          nextState.specials = nextState.specials.filter(s => s.type !== 'destructible');
+        }
+
+        return nextState;
+      }
+      return current;
+    });
+  }, []);
+  
   // Keyboard
   useKeyboard(({ key, isP1, isP2, isAction }) => {
     if (isAction) {
@@ -204,5 +244,6 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin, onEscapeReques
     handleRestart,
     handleMove,
     handleUndo,
+    activatePowerup,
   }
 }

@@ -42,6 +42,7 @@ export default function LevelScreen({ levelNum, onHub }) {
     handleRestart,
     handleMove,
     handleUndo,
+    activatePowerup,
   } = useGameEngine(levelNum, {
     onRoundWin: (idx) => { setCompletedRound(idx); setTimeout(() => setShowRoundWin(true), 500) },
     onLevelWin: ()    => { setTimeout(() => setShowLevelWin(true), 500) },
@@ -156,6 +157,38 @@ export default function LevelScreen({ levelNum, onHub }) {
           />
         )}
       </div>
+      
+      {/* --- DYNAMIC POWERUP MENU --- */}
+      {config?.powerups && state?.isFinalRound && (
+        <div style={{ 
+          display: 'flex', gap: '10px', justifyContent: 'center', 
+          padding: '10px', background: 'rgba(0,0,0,0.8)', borderTop: '2px solid #444' 
+        }}>
+          {config.powerups.map(pwr => {
+            const isActive = state.activePowerups?.includes(pwr.id);
+            const canAfford = (state.tokens || 0) >= pwr.cost;
+            return (
+              <button 
+                key={pwr.id}
+                onClick={() => activatePowerup(pwr.id, pwr.cost)}
+                disabled={isActive || !canAfford}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: isActive ? '2px solid #4CAF50' : (canAfford ? '2px solid #FFD700' : '2px solid #555'),
+                  backgroundColor: isActive ? '#1b4a1b' : '#222',
+                  color: isActive ? '#4CAF50' : (canAfford ? '#fff' : '#777'),
+                  cursor: (isActive || !canAfford) ? 'not-allowed' : 'pointer',
+                  fontWeight: 'bold'
+                }}
+              >
+                {pwr.name} <br/>
+                <span style={{ fontSize: '0.8rem', fontWeight: 'normal' }}>({pwr.cost} 🪙)</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       <BottomStrip
         config={config}
