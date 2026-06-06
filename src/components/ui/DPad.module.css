@@ -5,6 +5,22 @@
   gap: 4px;
 }
 
+.compact {
+  gap: 2px;
+}
+
+.compact .label {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+}
+
+.compact .grid {
+  display: grid;
+  grid-template-columns: repeat(3, 28px);
+  grid-template-rows:    repeat(3, 28px);
+  gap: 2px;
+}
+
 .label {
   font-family: var(--font-pixel);
   font-size: 7px;
