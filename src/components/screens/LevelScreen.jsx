@@ -81,6 +81,66 @@ export default function LevelScreen({ levelNum, onHub }) {
       <div className={styles.canvasArea} ref={canvasAreaRef} style={{ position: 'relative' }}>
         <GameBoard state={state} />
 
+        {isTouch && (
+          <>
+            <div className={styles.escButton}>
+              <button
+                className={styles.iconBtn}
+                onTouchStart={e => { e.preventDefault(); onHub() }}
+                onMouseDown={onHub}
+                aria-label="Return to hub"
+              >
+                ⌂
+              </button>
+            </div>
+            <div className={styles.topRightButtons}>
+              <button
+                className={styles.iconBtn}
+                onTouchStart={e => { e.preventDefault(); handleUndo?.() }}
+                onMouseDown={handleUndo}
+                aria-label="Undo"
+              >
+                ↩
+              </button>
+              <button
+                className={styles.iconBtn}
+                onTouchStart={e => { e.preventDefault(); handleRestart() }}
+                onMouseDown={handleRestart}
+                aria-label="Restart"
+              >
+                ↺
+              </button>
+            </div>
+            {isCoop ? (
+              <div className={styles.touchControlsCoop}>
+                <div className={styles.padSide}>
+                  <DPad
+                    compact
+                    label="P2"
+                    accentColor="#1a7a1a"
+                    onMove={(k) => handleMove?.(k, 'player2Pos')}
+                  />
+                </div>
+                <div className={styles.padSide}>
+                  <DPad
+                    compact
+                    label="P1"
+                    onMove={(k) => handleMove?.(k, 'playerPos')}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className={styles.touchControls}>
+                <DPad
+                  compact
+                  label="P1"
+                  onMove={(k) => handleMove?.(k, 'playerPos')}
+                />
+              </div>
+            )}
+          </>
+        )}
+
         {/* --- TUTORIAL BUTTON --- */}
         {config?.hasTutorialButton && (
           <button 
@@ -200,39 +260,6 @@ export default function LevelScreen({ levelNum, onHub }) {
         totalRounds={totalRounds}
         carriedTokens={carriedTokens}
       />
-
-      {isTouch && (
-        <div className={styles.touchRow}>
-          <DPad
-            label="P1"
-            onMove={(k) => handleMove?.(k, 'playerPos')}
-          />
-          {isCoop && (
-            <DPad
-              label="P2"
-              accentColor="#1a7a1a"
-              onMove={(k) => handleMove?.(k, 'player2Pos')}
-            />
-          )}
-          <div className={styles.actionBtns}>
-            <button className={styles.actionBtn}
-              onTouchStart={e=>{e.preventDefault(); handleUndo?.()}}
-              onMouseDown={handleUndo}>
-              <span>↩</span><span>Undo</span>
-            </button>
-            <button className={styles.actionBtn}
-              onTouchStart={e=>{e.preventDefault(); handleRestart()}}
-              onMouseDown={handleRestart}>
-              <span>↺</span><span>Restart</span>
-            </button>
-            <button className={styles.actionBtn}
-              onTouchStart={e=>{e.preventDefault(); onHub()}}
-              onMouseDown={onHub}>
-              <span>⌂</span><span>Hub</span>
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

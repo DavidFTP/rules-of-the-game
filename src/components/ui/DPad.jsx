@@ -12,9 +12,9 @@ import styles from './DPad.module.css'
  *   label             — small label above the pad e.g. "P1"
  *   accentColor       — optional CSS colour for the buttons
  */
-export default function DPad({ onMove, onAction, label, accentColor }) {
+export default function DPad({ onMove, onAction, label, accentColor, compact }) {
   return (
-    <div className={styles.wrap}>
+    <div className={`${styles.wrap} ${compact ? styles.compact : ''}`}>
       {label && <span className={styles.label}>{label}</span>}
       <div className={styles.grid}>
         <PadBtn dir="ArrowUp"    onMove={onMove} accentColor={accentColor}

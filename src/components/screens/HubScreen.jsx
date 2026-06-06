@@ -45,19 +45,20 @@ export default function HubScreen({ onEnterLevel }) {
             onClose={() => setPendingDoor(null)}
           />
         )}
+
+        {isTouch && (
+          <div className={styles.touchControls}>
+            <DPad
+              compact
+              label="Move"
+              onMove={movePlayer}
+              onAction={() => movePlayer('Enter')}
+            />
+          </div>
+        )}
       </div>
 
       <BottomStrip config={null} state={null} />
-
-      {isTouch && (
-        <div className={styles.touchRow}>
-          <DPad
-            label="Move"
-            onMove={movePlayer}
-            onAction={() => movePlayer('Enter')}
-          />
-        </div>
-      )}
     </div>
   )
 }
