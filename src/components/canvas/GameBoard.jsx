@@ -73,7 +73,7 @@ function drawFrame(ctx, state) {
   // Targets
   targets.forEach(t => {
     const inFog = visible && !visible.has(`${t.r},${t.c}`)
-    if (!inFog) drawTarget(ctx, t.r, t.c)
+    if (!inFog) drawTarget(ctx, t)
   })
 
   // Boxes
@@ -97,6 +97,14 @@ function drawFrame(ctx, state) {
 
   // Fog overlay on top of everything
   if (fogOn) drawFogOverlay(ctx, playerPos, rows, cols, config.fogRadius ?? 2.5)
+
+  // Coins
+  specials.forEach(s => {
+    const inFog = visible && !visible.has(`${s.r},${s.c}`);
+    if (!inFog && s.type === 'coin') {
+      drawCoin(ctx, s.c * CS, s.r * CS);
+    }
+  });
 }
 
 function drawCell(ctx, type, r, c, inFog, specials) {
@@ -107,7 +115,24 @@ function drawCell(ctx, type, r, c, inFog, specials) {
     return
   }
   if (type === T.WALL) {
-    drawWall(ctx, x, y)
+    const isGate = specials?.some(s => s.type === 'gate' && s.r === r && s.c === c)
+    if (isGate) {
+      drawGate(ctx, x, y)
+    } else {
+    const isDestructible = specials?.some(s => s.type === 'destructible' && s.r === r && s.c === c);
+    
+    drawWall(ctx, x, y); // Draw the base wall first
+    
+    if (isDestructible) {
+      // Draw red cracks over it so they know they can break it!
+      ctx.strokeStyle = 'rgba(255, 80, 80, 0.9)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x + 10, y + 10); ctx.lineTo(x + CS - 10, y + CS - 10);
+      ctx.moveTo(x + CS - 10, y + 10); ctx.lineTo(x + 10, y + CS - 10);
+      ctx.stroke();
+    }
+    }
   } else if (type === T.CRACK) {
     drawCrack(ctx, x, y)
   } else if (type === T.SWITCH) {
@@ -157,17 +182,40 @@ function drawSwitch(ctx, x, y, active) {
   ctx.fillText(active ? 'ON' : 'SW', x + CS / 2, y + CS / 2 + 5)
 }
 
-function drawTarget(ctx, r, c) {
-  const x = c * CS, y = r * CS
-  ctx.fillStyle = 'rgba(76,175,80,0.18)'
-  ctx.fillRect(x + 4, y + 4, CS - 8, CS - 8)
-  ctx.strokeStyle = '#4caf50'
-  ctx.lineWidth = 2
-  const mx = x + CS/2, my = y + CS/2, hs = CS/2 - 9
-  ctx.beginPath()
-  ctx.moveTo(mx, my - hs); ctx.lineTo(mx + hs, my)
-  ctx.lineTo(mx, my + hs); ctx.lineTo(mx - hs, my)
-  ctx.closePath(); ctx.stroke()
+function drawTarget(ctx, targetObj) {
+  const { r, c, type } = targetObj;
+  const x = c * CS, y = r * CS;
+  
+  // Look up the color based on the target type, default to green
+  const boxData = type && BOX_COLORS[type] ? BOX_COLORS[type] : BOX_COLORS.green;
+  
+  ctx.fillStyle = boxData.bg;
+  ctx.globalAlpha = 0.3; // Make the background semi-transparent
+  ctx.fillRect(x + 4, y + 4, CS - 8, CS - 8);
+  ctx.globalAlpha = 1.0; 
+
+  ctx.strokeStyle = boxData.mark;
+  ctx.lineWidth = 2;
+  const mx = x + CS/2, my = y + CS/2, hs = CS/2 - 9;
+  ctx.beginPath();
+  ctx.moveTo(mx, my - hs); ctx.lineTo(mx + hs, my);
+  ctx.lineTo(mx, my + hs); ctx.lineTo(mx - hs, my);
+  ctx.closePath(); 
+  ctx.stroke();
+}
+
+function drawGate(ctx, x, y) {
+  // Draw a metallic looking door
+  ctx.fillStyle = '#445566';
+  ctx.fillRect(x, y, CS, CS);
+  ctx.fillStyle = '#223344';
+  ctx.fillRect(x + 4, y + 4, CS - 8, CS - 8);
+  ctx.strokeStyle = '#88aadd';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x + 10, y + CS / 2);
+  ctx.lineTo(x + CS - 10, y + CS / 2);
+  ctx.stroke();
 }
 
 const BOX_COLORS = {
@@ -274,4 +322,26 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.lineTo(x + r, y + h);    ctx.arcTo(x,   y+h, x,   y+h-r, r)
   ctx.lineTo(x,     y + r);    ctx.arcTo(x,   y,   x+r, y,     r)
   ctx.closePath()
+}
+
+
+function drawCoin(ctx, x, y) {
+  const cx = x + CS / 2;
+  const cy = y + CS / 2;
+  
+  // Outer gold ring
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#B8860B';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Inner dollar sign
+  ctx.fillStyle = '#B8860B';
+  ctx.font = 'bold 16px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('$', cx, cy + 1);
 }

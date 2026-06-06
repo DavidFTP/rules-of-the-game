@@ -40,6 +40,7 @@ function buildStateForRound(levelData, roundIndex = 0) {
     roundIndex,
     totalRounds:  isMulti ? levelData.rounds.length : 1,
     isFinalRound: isMulti ? roundIndex === levelData.rounds.length - 1 : true,
+    active_Powerups: [],
   }
 }
 
@@ -55,9 +56,9 @@ function buildStateForRound(levelData, roundIndex = 0) {
  *   roundIndex    — which round we're on (0-based)
  *   totalRounds   — how many rounds this level has
  *   advanceRound  — call this after showing the between-round screen
- *   handleRestart — restart current round
+ *   handleRestart — restart the level from round 1
  */
-export function useGameEngine(levelNum, { onRoundWin, onLevelWin } = {}) {
+export function useGameEngine(levelNum, { onRoundWin, onLevelWin, onEscapeRequest } = {}) {
   const levelData = LEVELS[levelNum]
 
   const [roundIndex, setRoundIndex] = useState(0)
@@ -81,14 +82,17 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin } = {}) {
     setState(buildStateForRound(LEVELS[levelNum], 0))
   }, [levelNum])
 
-  // Win detection after every state change
+ // Win detection after every state change
   useEffect(() => {
     if (!state || wonRef.current || roundWonRef.current) return
     if (!checkWin(state)) return
 
     roundWonRef.current = true
-    const earned = state.tokens ?? 0
-    setCarriedTokens(prev => prev + earned)
+    
+    // 🚨 THIS IS THE FIX: Set the bag exactly to what the state has. 
+    // Do NOT use "prev => prev + earned", otherwise it doubles every round!
+    const currentTokens = state.tokens ?? 0;
+    setCarriedTokens(currentTokens);
 
     if (state.isFinalRound) {
       wonRef.current = true
@@ -97,7 +101,6 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin } = {}) {
       onRoundWin?.(state.roundIndex)
     }
   }, [state, onRoundWin, onLevelWin])
-
   /** Move to the next round. Call this from the UI after showing a between-round screen. */
   const advanceRound = useCallback(() => {
     const nextIdx = roundIndex + 1
@@ -120,11 +123,10 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin } = {}) {
     roundWonRef.current = false
     setHistory([])
     setRestarts(r => r + 1)
-    setState(() => {
-      const fresh = buildStateForRound(LEVELS[levelNum], roundIndex)
-      return fresh ? { ...fresh, tokens: carriedTokens } : null
-    })
-  }, [levelNum, roundIndex, carriedTokens])
+    setRoundIndex(0)
+    setCarriedTokens(0)
+    setState(() => buildStateForRound(LEVELS[levelNum], 0))
+  }, [levelNum])
 
   const handleUndo = useCallback(() => {
     setHistory(h => {
@@ -177,9 +179,50 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin } = {}) {
     })
   }, [])
 
+  // --- FIX 1: INSTANT BOMB POWERUP ---
+  const activatePowerup = useCallback((powerupId, cost) => {
+    setState(current => {
+      // Check if they can afford it and don't already have it
+      if ((current.tokens || 0) >= cost && !current.activePowerups?.includes(powerupId)) {
+        
+        let nextState = {
+          ...current,
+          tokens: current.tokens - cost,
+          activePowerups: [...(current.activePowerups || []), powerupId]
+        };
+
+        // 💥 IF IT IS THE BOMB, DESTROY ALL WALLS INSTANTLY!
+        if (powerupId === 'bomb') {
+          // 1. Clone the grid ONCE before making changes
+          const newGrid = nextState.grid.map(row => [...row]);
+          
+          // 2. Find all destructible walls and turn them into floors
+          nextState.specials.forEach(special => {
+            if (special.type === 'destructible') {
+              newGrid[special.r][special.c] = 0; // Turn to floor
+            }
+          });
+
+          // 3. Save the newly cleared grid back to the state
+          nextState.grid = newGrid;
+          
+          // 4. Filter out ALL destructible walls from the specials array in one clean sweep
+          nextState.specials = nextState.specials.filter(s => s.type !== 'destructible');
+        }
+
+        return nextState;
+      }
+      return current;
+    });
+  }, []);
+  
   // Keyboard
   useKeyboard(({ key, isP1, isP2, isAction }) => {
     if (isAction) {
+      if (key === 'Escape') {
+        onEscapeRequest?.()
+        return
+      }
       if (key === 'r' || key === 'R') { handleRestart(); return }
       if (key === 'z' || key === 'Z') { handleUndo();    return }
     }
@@ -201,5 +244,6 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin } = {}) {
     handleRestart,
     handleMove,
     handleUndo,
+    activatePowerup,
   }
 }
