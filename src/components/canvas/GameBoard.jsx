@@ -98,8 +98,16 @@ function drawFrame(ctx, state) {
   // Fog overlay on top of everything
   if (fogOn) drawFogOverlay(ctx, playerPos, rows, cols, config.fogRadius ?? 2.5)
 
-  // Coins
-  specials.forEach(s => {
+  // --- ENVIRONMENT SPECIALS (Doors) ---
+  (specials || []).forEach(s => {
+    const inFog = visible && !visible.has(`${s.r},${s.c}`);
+    if (!inFog && s.type === 'door') {
+      drawDoor(ctx, s.c * CS, s.r * CS);
+    }
+  });
+
+  // --- ITEM SPECIALS (Coins) ---
+  (specials || []).forEach(s => {
     const inFog = visible && !visible.has(`${s.r},${s.c}`);
     if (!inFog && s.type === 'coin') {
       drawCoin(ctx, s.c * CS, s.r * CS);
@@ -344,4 +352,19 @@ function drawCoin(ctx, x, y) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('$', cx, cy + 1);
+}
+
+function drawDoor(ctx, x, y) {
+  // Dark opening
+  ctx.fillStyle = '#111'; 
+  ctx.fillRect(x, y, CS, CS);
+  
+  // Outer frame
+  ctx.strokeStyle = '#555';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(x, y, CS, CS);
+  
+  // Inner mysterious glow
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+  ctx.fillRect(x + 4, y + 4, CS - 8, CS - 8);
 }

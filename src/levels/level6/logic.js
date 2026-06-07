@@ -1,40 +1,54 @@
-// Level 6 — Two Councils
-// The top strip is split: one side tells you the wrong order (the world),
-// the other tells you the right order (truth).
-// Only putting blue box first, then red, wins the level.
-
-export const map = [
-  '############',
-  '#..........#',
-  '#..T....T..#',
-  '#..........#',
-  '#..........#',
-  '#..Br...Bb.#',
-  '#....P.....#',
-  '#..........#',
-  '############',
-]
-
-export const boxes = [
-  { r: 5, c: 3, type: 'red',  id: 'box-red'  },
-  { r: 5, c: 8, type: 'blue', id: 'box-blue' },
-]
-
-export const targets = [
-  { r: 2, c: 3 },
-  { r: 2, c: 8 },
-]
-
-export const playerStart = { r: 6, c: 5 }
+import { choiceMap, leftPuzzleMap, rightPuzzleMap } from './map.js';
 
 export const config = {
+  theme: 'level6',
   topStripMode: 'council',
   bottomStripMode: 'tokens',
-  council: {
-    worldSays: 'Push the RED box first — it\'s the heaviest and most important.',
-    truthSays: 'Begin with the BLUE box. Small steps, right order. Blue first.',
-  },
-  // Blue must be placed on target before red
-  requiredOrder: ['blue', 'red'],
+  coop: false,
+  hasTutorialButton: false,
   enforceOrder: true,
-}
+  
+  // Dynamic Council Texts
+  councilTexts: {
+    intro: {
+      left: "Walk through the West Door. It is the logical path.",
+      right: "Walk through the East Door. It is the true path."
+    },
+    world: {
+      left: "Good. Now place RED first, then BLUE.",
+      right: "You chose wrong. There is no turning back."
+    },
+    truth: {
+      left: "You ignored us. You will regret it.",
+      right: "Good. Now place BLUE first, then RED."
+    }
+  }
+};
+
+export const rounds = [
+  // Round 0: The Choice Room
+  {
+    map: choiceMap,
+    playerStart: { r: 3, c: 6 } // Start dead center
+  },
+  // Round 1: The Left Puzzle (World)
+  {
+    map: leftPuzzleMap,
+    boxes: [
+      { r: 4, c: 3, type: 'red', id: 'l-red' },
+      { r: 4, c: 6, type: 'blue', id: 'l-blue' }
+    ],
+    targets: [{ r: 2, c: 2 }, { r: 2, c: 7 }],
+    playerStart: { r: 5, c: 4 }
+  },
+  // Round 2: The Right Puzzle (Truth)
+  {
+    map: rightPuzzleMap,
+    boxes: [
+      { r: 4, c: 3, type: 'red', id: 'r-red' },
+      { r: 4, c: 8, type: 'blue', id: 'r-blue' }
+    ],
+    targets: [{ r: 2, c: 3 }, { r: 2, c: 8 }],
+    playerStart: { r: 5, c: 5 }
+  },
+];

@@ -2,8 +2,13 @@ import React from 'react'
 import styles from './TopStrip.module.css'
 
 export default function TopStrip({ config, state, levelNum, restarts, roundIndex, totalRounds }) {
-  const roundInfo = totalRounds > 1
-    ? <span className={styles.roundBadge}>Round {(roundIndex ?? 0) + 1}/{totalRounds}</span>
+  // 💡 OVERRIDE FOR LEVEL 6: Force it to display 2 rounds!
+  const isLevel6 = config?.theme === 'level6' || state?.config?.theme === 'level6';
+  const displayTotal = isLevel6 ? 2 : totalRounds;
+  const displayRound = isLevel6 ? (roundIndex > 0 ? 2 : 1) : ((roundIndex ?? 0) + 1);
+
+  const roundInfo = displayTotal > 1
+    ? <span className={styles.roundBadge}>Round {displayRound}/{displayTotal}</span>
     : null
 
   if (!config) return <DefaultStrip levelNum={levelNum} state={state} roundInfo={roundInfo} />
@@ -11,11 +16,47 @@ export default function TopStrip({ config, state, levelNum, restarts, roundIndex
   switch (config.topStripMode) {
     case 'marquee':  return <MarqueeStrip   config={config} state={state} levelNum={levelNum} roundInfo={roundInfo} />
     case 'narrative':return <NarrativeStrip config={config} state={state} levelNum={levelNum} roundInfo={roundInfo} />
-    case 'council':  return <CouncilStrip   config={config} roundInfo={roundInfo} />
-    case 'simon':    return <SimonStrip     config={config} state={state}  levelNum={levelNum} roundInfo={roundInfo} />
+    case 'council':  return <CouncilStrip   config={config} state={state} roundInfo={roundInfo} />
+    case 'simon':    return <SimonStrip     config={config} state={state} levelNum={levelNum} />
     case 'hints':    return <HintsStrip     config={config} restarts={restarts} roundInfo={roundInfo} />
     default:         return <DefaultStrip   levelNum={levelNum} state={state} roundInfo={roundInfo} />
   }
+}
+
+function CouncilStrip({ config, state, roundInfo }) {
+  const isLevel6 = config.theme === 'level6';
+  
+  let leftText = config.council?.worldSays;
+  let rightText = config.council?.truthSays;
+
+  if (isLevel6 && config.councilTexts) {
+    if (state?.roundIndex === 0) {
+      leftText = config.councilTexts.intro.left;
+      rightText = config.councilTexts.intro.right;
+    } else if (state?.chosenPath === 'left') {
+      leftText = config.councilTexts.world.left;
+      rightText = config.councilTexts.world.right;
+    } else {
+      leftText = config.councilTexts.truth.left;
+      rightText = config.councilTexts.truth.right;
+    }
+  }
+
+  const councilStyle = isLevel6 ? {
+    borderColor: '#666', color: '#eee', borderLeft: '3px solid #666', background: 'rgba(255,255,255,0.08)'
+  } : {};
+
+  return (
+    <div className={`${styles.strip} ${styles.councilWrap}`}>
+      {roundInfo && <span className={styles.title} style={{flexShrink:0}}>{roundInfo}</span>}
+      <div className={`${styles.council} ${!isLevel6 ? styles.worldCouncil : ''}`} style={councilStyle}>
+        <div className={styles.councilLabel}>VOICE 1</div>{leftText}
+      </div>
+      <div className={`${styles.council} ${!isLevel6 ? styles.truthCouncil : ''}`} style={councilStyle}>
+        <div className={styles.councilLabel}>VOICE 2</div>{rightText}
+      </div>
+    </div>
+  )
 }
 
 function DefaultStrip({ levelNum, state, roundInfo }) {
@@ -60,21 +101,6 @@ function MarqueeStrip({ config, state, levelNum, roundInfo }) {
   )
 }
 
-function CouncilStrip({ config, roundInfo }) {
-  return (
-    <div className={`${styles.strip} ${styles.councilWrap}`}>
-      {roundInfo && <span className={styles.title} style={{flexShrink:0}}>{roundInfo}</span>}
-      <div className={`${styles.council} ${styles.worldCouncil}`}>
-        <div className={styles.councilLabel}>THE WORLD SAYS</div>
-        {config.council?.worldSays}
-      </div>
-      <div className={`${styles.council} ${styles.truthCouncil}`}>
-        <div className={styles.councilLabel}>TRUTH SAYS</div>
-        {config.council?.truthSays}
-      </div>
-    </div>
-  )
-}
 
 function SimonStrip({ config, state, levelNum }) {
   // 🚨 THE FIX: Look at state.config first so we get the current round's sequence!

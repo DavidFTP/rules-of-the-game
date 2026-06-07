@@ -17,6 +17,7 @@ import { T } from './constants.js'
  *   ' '  floor (space also treated as floor)
  *   'G'  gate
  *   'D'  destructible wall (looks like a normal wall but can be destroyed by the player)
+ *   'E'  door
  *
  * overrides: { boxes, targets, playerStart, player2Start }
  * These let a level's logic.js replace the map-parsed values
@@ -78,6 +79,10 @@ export function parseMap(mapLines, overrides = {}) {
           row.push(T.WALL) // Make it solid like a normal wall
           specials.push({ r, c, type: 'destructible' }) // Flag it so we can break it!
           break
+        case 'E':
+          row.push(0); // 0 means walkable floor
+          specials.push({ r, c, type: 'door' });
+          break;
         default:
           row.push(T.FLOOR)
       }
