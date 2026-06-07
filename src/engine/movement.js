@@ -1,6 +1,13 @@
 import { DIRS } from './constants.js'
 import { isWall, isCrack, isTarget, findBoxAt, findSpecialAt } from './collision.js'
 
+/**
+ * moveEntity(state, key, playerKey)
+ *
+ * playerKey is either 'playerPos' (P1) or 'player2Pos' (P2).
+ * Returns a NEW state object — never mutates the original.
+ * Attaches _bump, _crackLose flags for the UI to react to.
+ */
 export function moveEntity(state, key, playerKey = 'playerPos') {
   const dir = DIRS[key]
   if (!dir) return state
@@ -12,6 +19,7 @@ export function moveEntity(state, key, playerKey = 'playerPos') {
   const nr = pos.r + dir.dr
   const nc = pos.c + dir.dc
 
+  // Wall check
   if (isWall(grid, nr, nc)) {
     return { ...state, _bump: true }
   }
@@ -19,50 +27,54 @@ export function moveEntity(state, key, playerKey = 'playerPos') {
   // Check if another player is standing there (co-op)
   const otherKey = playerKey === 'playerPos' ? 'player2Pos' : 'playerPos'
   const otherPos = state[otherKey]
-  if (otherPos && otherPos.r === nr && otherPos.c === nc) return { ...state, _bump: true }
+  if (otherPos && otherPos.r === nr && otherPos.c === nc) {
+    return { ...state, _bump: true }
+  }
 
   // Box push
   const boxIdx = findBoxAt(boxes, nr, nc)
-  
   if (boxIdx !== -1) {
     const br2 = nr + dir.dr
     const bc2 = nc + dir.dc
 
-    // --- 💪 POWERUP: SUPER PUSH (2 BOXES) ---
-    let secondBoxIdx = findBoxAt(boxes, br2, bc2);
-    if (secondBoxIdx !== -1) {
-      // If they haven't bought Super Push, they can't move 2 boxes!
-      if (!state.activePowerups?.includes('superPush')) return { ...state, _bump: true };
+    if (isWall(grid, br2, bc2)) return { ...state, _bump: true }
+    if (findBoxAt(boxes, br2, bc2) !== -1) return { ...state, _bump: true }
+    // Can't push box into other player
+    if (otherPos && otherPos.r === br2 && otherPos.c === bc2) return { ...state, _bump: true }
 
-      const br3 = br2 + dir.dr;
-      const bc3 = bc2 + dir.dc;
+    const pushedBox = boxes[boxIdx]
 
-      // Check if space behind the second box is blocked
-      if (isWall(grid, br3, bc3)) return { ...state, _bump: true };
-      if (findBoxAt(boxes, br3, bc3) !== -1) return { ...state, _bump: true }; 
-      if (otherPos && otherPos.r === br3 && otherPos.c === bc3) return { ...state, _bump: true };
-
-      const newBoxes = boxes.map((b, i) => {
-        if (i === boxIdx) return { ...b, r: br2, c: bc2, onTarget: isTarget(targets, br2, bc2) };
-        if (i === secondBoxIdx) return { ...b, r: br3, c: bc3, onTarget: isTarget(targets, br3, bc3) };
-        return b;
-      });
-
+    // Crack tile logic — only triggers for heavy/gold boxes
+    if (isCrack(grid, br2, bc2) && pushedBox.type === 'gold') {
+      const newBoxes = boxes.map((b, i) =>
+        i === boxIdx ? { ...b, r: br2, c: bc2 } : b
+      )
       return {
         ...state,
         [playerKey]: { r: nr, c: nc },
         boxes: newBoxes,
         moves: state.moves + 1,
         _bump: false,
+        _crackLose: true,
       }
     }
 
-    if (isWall(grid, br2, bc2)) return { ...state, _bump: true }
+    // --- CHRONOLOGICAL TRACKING (THE FIX) ---
+    const wasOnTarget = isTarget(targets, pushedBox.r, pushedBox.c);
+    const isNowOnTarget = isTarget(targets, br2, bc2);
     
-    // Normal single box push (Heavy box logic included)
-    const pushedBox = boxes[boxIdx]
-    let pushCost = pushedBox.type === 'brown' ? 10 : 0;
-    if ((state.tokens || 0) < pushCost) return { ...state, _bump: true }
+    // Copy the existing timeline, or start a new one if it doesn't exist
+    let newPlacedOrder = state.placedOrder ? [...state.placedOrder] : [];
+
+    if (!wasOnTarget && isNowOnTarget) {
+      // Box just landed on a target -> Add to timeline
+      newPlacedOrder.push(pushedBox.type);
+    } else if (wasOnTarget && !isNowOnTarget) {
+      // Box was pushed OFF a target -> Remove from timeline
+      const idx = newPlacedOrder.lastIndexOf(pushedBox.type);
+      if (idx !== -1) newPlacedOrder.splice(idx, 1);
+    }
+    // ----------------------------------------
 
     const newBoxes = boxes.map((b, i) => {
       if (i !== boxIdx) return b
@@ -73,10 +85,37 @@ export function moveEntity(state, key, playerKey = 'playerPos') {
       ...state,
       [playerKey]: { r: nr, c: nc },
       boxes: newBoxes,
-      tokens: state.tokens - pushCost, // Deduct tokens if heavy!
+      placedOrder: newPlacedOrder, // Inject the updated timeline here
+      moves: state.moves + 1,
+      _bump: false,
+      _crackLose: false,
+    }
+  }
+
+  // Switch interaction
+  const swIdx = findSpecialAt(specials, nr, nc)
+  
+  // 🕵️‍♂️ DEBUG: Tell us what you see!
+  if (swIdx !== -1) {
+    console.log("🔍 Stepped on a special item! Type:", specials[swIdx].type);
+  }
+
+  if (swIdx !== -1 && specials[swIdx].type === 'switch') {
+    console.log("💡 SWITCH PRESSED! Turning on the lights!");
+    
+    const newSpecials = specials.map((s, i) =>
+      i === swIdx ? { ...s, active: true } : s
+    )
+    let nextState = {
+      ...state,
+      [playerKey]: { r: nr, c: nc },
+      specials: newSpecials,
+      fogLifted: true, 
       moves: state.moves + 1,
       _bump: false,
     }
+
+    return openGate(nextState); // Open the gate(s) when the switch is pressed
   }
 
   // Coin collection
@@ -87,7 +126,7 @@ export function moveEntity(state, key, playerKey = 'playerPos') {
       ...state,
       [playerKey]: { r: nr, c: nc },
       specials: newSpecials,
-      tokens: (state.tokens || 0) + (specials[coinIdx].amount ?? 10),
+      tokens: state.tokens + (specials[coinIdx].amount ?? 10),
       moves: state.moves + 1,
       _bump: false,
     }
@@ -99,8 +138,10 @@ export function moveEntity(state, key, playerKey = 'playerPos') {
     [playerKey]: { r: nr, c: nc },
     moves: state.moves + 1,
     _bump: false,
+    _crackLose: false,
   }
 }
+
 /**
  * 🚪 Reusable Gate Opener
  * Turns a gate into a floor tile. 

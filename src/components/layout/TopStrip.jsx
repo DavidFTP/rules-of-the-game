@@ -76,25 +76,30 @@ function CouncilStrip({ config, roundInfo }) {
   )
 }
 
-function SimonStrip({ config, state, levelNum, roundInfo }) {
-  const seq  = config.simonSequence ?? []
-  const done = state?.simonStep ?? 0
-  const arrowMap = { ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→' }
+function SimonStrip({ config, state, levelNum }) {
+  // 🚨 THE FIX: Look at state.config first so we get the current round's sequence!
+  const activeConfig = state?.config || config;
+  const seq  = activeConfig.simonSequence ?? [];
+  const done = state?.simonStep ?? 0;
+  
+  const arrowMap = { ArrowUp: '⬆️ UP', ArrowDown: '⬇️ DOWN', ArrowLeft: '⬅️ LEFT', ArrowRight: '➡️ RIGHT' };
+  const currentCommand = seq[done];
+
   return (
-    <div className={styles.strip}>
-      <span className={styles.title}>LVL {levelNum}</span>
-      {roundInfo}
-      <div className={styles.simonSeq}>
-        {seq.map((k, i) => (
-          <span
-            key={i}
-            className={i < done ? styles.simonDone : i === done ? styles.simonNext : styles.simonPending}
-          >
-            {arrowMap[k] ?? k}
-          </span>
-        ))}
+    <div className={styles.strip} style={{ justifyContent: 'center', position: 'relative' }}>
+      <span className={styles.title} style={{ position: 'absolute', left: '18px' }}>LVL {levelNum}</span>
+      
+      <div style={{ 
+        fontSize: '15px', 
+        fontWeight: 'bold', 
+        letterSpacing: '1px', 
+        color: '#FFD700',
+        fontFamily: 'monospace'
+      }}>
+        {currentCommand 
+            ? `NEXT: ${arrowMap[currentCommand] || currentCommand}` 
+            : "✅ ALL INSTRUCTIONS FOLLOWED"}
       </div>
-      <span className={styles.meta}>Step: <em>{done}/{seq.length}</em></span>
     </div>
   )
 }

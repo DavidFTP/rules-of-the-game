@@ -80,6 +80,30 @@ export default function LevelScreen({ levelNum, onHub }) {
 
       <div className={styles.canvasArea} ref={canvasAreaRef} style={{ position: 'relative' }}>
         <GameBoard state={state} />
+        
+        {/* --- SIMON SAYS LOSE MODAL --- */}
+        {state?._showSimonLose && (
+          <Modal title="❌ Disobeyed Instructions" onClose={() => {}}>
+            <div style={{ textAlign: 'center', padding: '10px', lineHeight: '1.8', direction: 'ltr' }}>
+              <p style={{ fontSize: '1.2rem', marginBottom: '15px' }}>
+                You solved the puzzle, but you did it <strong>your own way</strong> instead of following the instructions!
+              </p>
+              <p style={{ fontSize: '1.1rem', color: '#ffbbbb' }}>
+                Just like Naaman, we must learn to obey God's word exactly, even when it seems like meaningless extra steps.
+              </p>
+              <button 
+                onClick={handleRestart}
+                style={{
+                  width: '100%', padding: '12px', marginTop: '20px',
+                  backgroundColor: '#e94560', color: 'white', border: 'none',
+                  borderRadius: '6px', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer'
+                }}
+              >
+                ↻ Restart and Obey
+              </button>
+            </div>
+          </Modal>
+        )}
 
         {isTouch && (
           <>

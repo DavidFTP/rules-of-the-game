@@ -37,10 +37,11 @@ function buildStateForRound(levelData, roundIndex = 0) {
     fogLifted:    !(levelData.config?.fogOfWar),
     placedOrder:  [],
     simonStep:    0,
+    _simonFailed: false, // 💡 NEW: Track if they deviated from the instructions
     roundIndex,
     totalRounds:  isMulti ? levelData.rounds.length : 1,
     isFinalRound: isMulti ? roundIndex === levelData.rounds.length - 1 : true,
-    active_Powerups: [],
+    activePowerups: [],
   }
 }
 
@@ -87,6 +88,12 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin, onEscapeReques
     if (!state || wonRef.current || roundWonRef.current) return
     if (!checkWin(state)) return
 
+    // 🚨 THE TRAP: They put the box on the target, but did they obey?
+    if (state.config?.topStripMode === 'simon' && state._simonFailed) {
+      setState(s => ({ ...s, _showSimonLose: true }))
+      return // Stop the win from registering!
+    }
+    
     roundWonRef.current = true
     
     // 🚨 THIS IS THE FIX: Set the bag exactly to what the state has. 
@@ -135,34 +142,38 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin, onEscapeReques
       return next
     })
   }, [])
-
-  const handleMove = useCallback((key, playerKey) => {
+  
+const handleMove = useCallback((key, playerKey) => {
     if (wonRef.current || roundWonRef.current) return
 
     setState(current => {
       if (!current) return current
 
-      // Simon Says: wrong key resets progress without moving
+      setHistory(h => pushHistory(h, current))
+      const next = moveEntity(current, key, playerKey)
+
+      // --- 💡 SIMON SAYS: FREE WILL LOGIC ---
       const cfg = current.config
       if (cfg?.topStripMode === 'simon') {
         const seq  = cfg.simonSequence ?? []
         const step = current.simonStep ?? 0
-        if (step < seq.length && key !== seq[step]) {
-          return { ...current, simonStep: 0 }
+        
+        // If they haven't failed yet, check this move
+        if (!current._simonFailed) {
+          if (step < seq.length && key === seq[step]) {
+            next.simonStep = step + 1 // Good move, advance the sequence
+          } else {
+            next._simonFailed = true  // Wrong move! Flag them as failed.
+            next.simonStep = step     // Freeze the UI command
+          }
+        } else {
+          // If they already failed, keep them failed and frozen
+          next._simonFailed = true
+          next.simonStep = current.simonStep
         }
       }
 
-      setHistory(h => pushHistory(h, current))
-      const next = moveEntity(current, key, playerKey)
-
-      // Advance Simon step
-      if (cfg?.topStripMode === 'simon') {
-        const seq  = cfg.simonSequence ?? []
-        const step = current.simonStep ?? 0
-        if (step < seq.length) return { ...next, simonStep: step + 1 }
-      }
-
-      // Track box placement order (L1 grey-last, L6 council order)
+      // Track box placement order
       if (cfg?.enforceOrder) {
         const justPlaced = next.boxes.filter(
           (b, i) => b.onTarget && !current.boxes[i]?.onTarget
