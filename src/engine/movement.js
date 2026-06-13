@@ -8,7 +8,8 @@ import { isWall, isCrack, isTarget, findBoxAt, findSpecialAt } from './collision
  * Returns a NEW state object — never mutates the original.
  * Attaches _bump, _crackLose flags for the UI to react to.
  */
-export function moveEntity(state, key, playerKey = 'playerPos') {
+// Add onBeforeBoxPush as the 4th parameter
+export function moveEntity(state, key, playerKey = 'playerPos', onBeforeBoxPush = null) {
   const dir = DIRS[key]
   if (!dir) return state
 
@@ -21,28 +22,42 @@ export function moveEntity(state, key, playerKey = 'playerPos') {
 
   // Wall check
   if (isWall(grid, nr, nc)) {
-    return { ...state, _bump: true }
+    return { ...state, _bump: true, _boxError: null } // Clear errors on normal bumps
   }
 
   // Check if another player is standing there (co-op)
   const otherKey = playerKey === 'playerPos' ? 'player2Pos' : 'playerPos'
   const otherPos = state[otherKey]
-  if (otherPos && otherPos.r === nr && otherPos.c === nc) {
-    return { ...state, _bump: true }
-  }
+  // if (otherPos && otherPos.r === nr && otherPos.c === nc) {
+  //   return { ...state, _bump: true, _boxError: null }
+  // }
 
-  // Box push
+  // ==========================================
+  // BOX PUSH LOGIC
+  // ==========================================
   const boxIdx = findBoxAt(boxes, nr, nc)
   if (boxIdx !== -1) {
     const br2 = nr + dir.dr
     const bc2 = nc + dir.dc
-
-    if (isWall(grid, br2, bc2)) return { ...state, _bump: true }
-    if (findBoxAt(boxes, br2, bc2) !== -1) return { ...state, _bump: true }
-    // Can't push box into other player
-    if (otherPos && otherPos.r === br2 && otherPos.c === bc2) return { ...state, _bump: true }
-
     const pushedBox = boxes[boxIdx]
+
+    // 🛑 RUN CUSTOM LEVEL RULES (Heavy Box Check)
+    if (onBeforeBoxPush) {
+      const result = onBeforeBoxPush(state, pushedBox, playerKey === 'playerPos' ? 1 : 2, dir.dc, dir.dr);
+      if (!result.allowed) {
+        // Push is blocked! Return the error text for the GameBoard to render
+        return { 
+          ...state, 
+          _bump: true, 
+          _boxError: { text: result.errorText, r: pushedBox.r, c: pushedBox.c } 
+        };
+      }
+    }
+
+    if (isWall(grid, br2, bc2)) return { ...state, _bump: true, _boxError: null }
+    if (findBoxAt(boxes, br2, bc2) !== -1) return { ...state, _bump: true, _boxError: null }
+    // Can't push box into other player
+    if (otherPos && otherPos.r === br2 && otherPos.c === bc2) return { ...state, _bump: true, _boxError: null }
 
     // Crack tile logic — only triggers for heavy/gold boxes
     if (isCrack(grid, br2, bc2) && pushedBox.type === 'gold') {

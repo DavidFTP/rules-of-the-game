@@ -31,9 +31,12 @@ export default function LevelScreen({ levelNum, onHub }) {
   const [showRoundWin,   setShowRoundWin]   = useState(false)
   const [showTutorial,   setShowTutorial]   = useState(false) // <-- New State
   const [completedRound, setCompletedRound] = useState(null)
+  const [showModeSelect, setShowModeSelect] = useState(false);
+  const [coopMode, setCoopMode] = useState(true);
 
   const { bag, buy, purchases } = useTokens()
 
+  // 1. Get the game state hook
   const {
     state,
     restarts,
@@ -51,6 +54,31 @@ export default function LevelScreen({ levelNum, onHub }) {
     onEscapeRequest: onHub,
   })
 
+  // 2. Safely grab the config from the CURRENT state (which merges the round config)
+  const currentConfig = state?.config || levelData?.config;
+
+  // 3. Trigger the modal when the level loads, with DEBUG LOGS
+  useEffect(() => {
+    if (currentConfig?.requiresPlayerSelection && roundIndex === 0 && restarts === 0) {
+      console.log('✅ Showing Mode Select Modal!');
+      setShowModeSelect(true);
+    }
+  }, [currentConfig, roundIndex, restarts]);
+
+  useEffect(() => {
+    if (state && !coopMode) {
+      if (state.config) state.config.coop = false; // Tell logic.js it's solo
+      state.player2Pos = null; // Delete Player 2 coordinates from the engine
+    }
+  }, [state, coopMode]);
+
+  // Create a safe copy of state for the GameBoard to ensure P2 is hidden visually
+  const displayState = state ? {
+    ...state,
+    player2Pos: coopMode ? state.player2Pos : null
+  } : null;
+  // ==========================================
+  
   const showCrack = !!state?._crackLose
 
   // Swipe anywhere on the canvas moves P1
@@ -67,12 +95,13 @@ export default function LevelScreen({ levelNum, onHub }) {
   }
 
   const config = levelData.config
-  const isCoop = !!config?.coop
+  // Change this line so it respects your coopMode state!
+  const isCoop = !!currentConfig?.coop && coopMode;
 
   return (
     <div className={styles.wrap}>
       <TopStrip
-        config={config}
+        config={currentConfig}
         state={state}
         levelNum={levelNum}
         restarts={restarts}
@@ -81,7 +110,34 @@ export default function LevelScreen({ levelNum, onHub }) {
       />
 
       <div className={styles.canvasArea} ref={canvasAreaRef} style={{ position: 'relative' }}>
-        <GameBoard state={state} images={images} />
+        
+        {/* Pass displayState here instead of state */}
+        <GameBoard state={displayState} images={images} />
+        
+        {/* --- 1P / 2P SELECTION MODAL --- */}
+        {showModeSelect && (
+          <Modal title="Choose Game Mode" onClose={() => {}}>
+            <div style={{ textAlign: 'center', padding: '10px' }}>
+              <p style={{ fontSize: '1.2rem', marginBottom: '20px' }}>
+                How do you want to play this level?
+              </p>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                <button 
+                  onClick={() => { setCoopMode(false); setShowModeSelect(false); }}
+                  style={{ padding: '12px 20px', backgroundColor: '#4a90e2', color: 'white', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  👤 1 Player (Solo)
+                </button>
+                <button 
+                  onClick={() => { setCoopMode(true); setShowModeSelect(false); }}
+                  style={{ padding: '12px 20px', backgroundColor: '#28a745', color: 'white', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  👥 2 Players (Co-op)
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
         
         {/* --- SIMON SAYS LOSE MODAL --- */}
         {state?._showSimonLose && (

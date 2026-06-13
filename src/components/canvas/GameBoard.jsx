@@ -59,11 +59,11 @@ export default function GameBoard({ state, images: imagesProp = null }) {
   return (
     <div ref={containerRef} className={styles.wrap}>
       <div style={{ position: 'absolute', zIndex: 2, right: 8, top: 8 }}>
-        <select value={assetMode} onChange={e => setAssetMode(e.target.value)}>
+        {/*<select value={assetMode} onChange={e => setAssetMode(e.target.value)}>
           <option value={ASSET_MODE.ASSETS}>Use Assets</option>
           <option value={ASSET_MODE.SHEET}>Use Spritesheet</option>
           <option value={ASSET_MODE.NONE}>Fallback Only</option>
-        </select>
+        </select>*/}
       </div>
       <canvas
         ref={canvasRef}
@@ -113,13 +113,22 @@ function drawFrame(ctx, state, images) {
   })
 
   // Players
+  let p1Offset = 0;
+  let p2Offset = 0;
+
+  // If they are on the same tile, shift P1 left and P2 right!
+  if (playerPos && player2Pos && playerPos.r === player2Pos.r && playerPos.c === player2Pos.c) {
+    p1Offset = -10;
+    p2Offset = 10;
+  }
+
   if (playerPos) {
     const inFog = visible && !visible.has(`${playerPos.r},${playerPos.c}`)
-    if (!inFog) drawPlayer(ctx, playerPos, 1, images)
+    if (!inFog) drawPlayer(ctx, playerPos, 1, images, p1Offset)
   }
   if (player2Pos) {
     const inFog = visible && !visible.has(`${player2Pos.r},${player2Pos.c}`)
-    if (!inFog) drawPlayer(ctx, player2Pos, 2, images)
+    if (!inFog) drawPlayer(ctx, player2Pos, 2, images, p2Offset)
   }
 
   // Fog overlay on top of everything
@@ -140,6 +149,26 @@ function drawFrame(ctx, state, images) {
       drawCoin(ctx, s.c * CS, s.r * CS, images);
     }
   });
+
+  // --- FLOATING TEXT ERROR (Heavy Boxes) ---
+  if (state._boxError) {
+    const { text, r, c, opacity = 1 } = state._boxError;
+    const x = c * CS + (CS / 2);
+    const y = r * CS - 10; // Float slightly above the box
+    
+    ctx.globalAlpha = opacity;
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    
+    // Draw text outline for visibility
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'red';
+    ctx.strokeText(text, x, y);
+    ctx.fillText(text, x, y);
+    
+    ctx.globalAlpha = 1.0; // Reset alpha
+  }
 }
 
 function drawCell(ctx, type, r, c, inFog, specials, images) {
@@ -330,8 +359,8 @@ function drawBox(ctx, box, onTarget, images) {
   }
 }
 
-function drawPlayer(ctx, pos, playerNum, images) {
-  const x = pos.c * CS, y = pos.r * CS
+function drawPlayer(ctx, pos, playerNum, images, xOffset = 0) {
+  const x = pos.c * CS + xOffset, y = pos.r * CS
   const isP2 = playerNum === 2
   const dir = pos.dir ?? 'down'
   // Map direction to sprite key using helper

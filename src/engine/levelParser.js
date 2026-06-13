@@ -47,6 +47,10 @@ export function parseMap(mapLines, overrides = {}) {
           row.push(T.FLOOR)
           boxes.push({ r, c, type: 'green', id: `box-${r}-${c}` })
           break
+        case 'H': 
+          row.push(T.FLOOR)
+          boxes.push({ r, c, type: 'red', id: `box-${r}-${c}`, isHeavy: true })
+          break
         case 'O':
           row.push(T.TARGET)
           targets.push({ r, c })

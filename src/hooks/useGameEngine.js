@@ -23,28 +23,36 @@ function buildStateForRound(levelData, roundIndex = 0) {
 
   if (!mapLines) return null
 
-  // Round-level overrides beat level-root overrides
+  // 1. Let parseMap do its standard job WITHOUT the box override
   const parsed = parseMap(mapLines, {
-    boxes:        round?.boxes        ?? levelData.boxes,
     targets:      round?.targets      ?? levelData.targets,
     playerStart:  round?.playerStart  ?? levelData.playerStart,
     player2Start: round?.player2Start ?? levelData.player2Start,
   })
 
+  // 2. Safely apply the boxes function (if it exists) to the parsed boxes
+  const boxOverride = round?.boxes ?? levelData.boxes;
+  let finalBoxes = parsed.boxes;
+  if (typeof boxOverride === 'function') {
+    finalBoxes = boxOverride(parsed.boxes);
+  } else if (Array.isArray(boxOverride)) {
+    finalBoxes = boxOverride;
+  }
+
   return {
     ...parsed,
+    boxes:        finalBoxes, // 👈 Injects the properly formatted array!
     config:       { ...(levelData.config ?? {}), ...(round?.config ?? {}) },
     fogLifted:    !(levelData.config?.fogOfWar),
     placedOrder:  [],
     simonStep:    0,
-    _simonFailed: false, // 💡 NEW: Track if they deviated from the instructions
+    _simonFailed: false,
     roundIndex,
     totalRounds:  isMulti ? levelData.rounds.length : 1,
     isFinalRound: isMulti ? roundIndex === levelData.rounds.length - 1 : true,
     activePowerups: [],
   }
 }
-
 /**
  * useGameEngine(levelNum, { onRoundWin, onLevelWin })
  *
@@ -173,7 +181,19 @@ const handleMove = useCallback((key, playerKey) => {
       if (!current) return current
 
       setHistory(h => pushHistory(h, current))
-      const next = moveEntity(current, key, playerKey)
+      
+      // Grab the custom push rules from the level's logic file
+      const pushHook = LEVELS[levelNum]?.logic?.onBeforeBoxPush || LEVELS[levelNum]?.onBeforeBoxPush;
+      
+      // Pass the hook into moveEntity
+      const next = moveEntity(current, key, playerKey, pushHook)
+
+      // Clear the "2 Players Required" error after 1.5 seconds
+      if (next._boxError && !current._boxError) {
+        setTimeout(() => {
+          setState(s => s ? { ...s, _boxError: null } : s);
+        }, 1500);
+      }
 
       // --- 💡 SIMON SAYS: FREE WILL LOGIC ---
       const cfg = current.config
