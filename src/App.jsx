@@ -9,11 +9,11 @@ import styles from './App.module.css'
 
 function AppContent() {
   const [scene, setScene] = useState('hub')
-  const { isLoading, progress } = useAssets()
+  const { isLoading, progress, error } = useAssets()
   const theme = getTheme(scene === 'hub' ? 'hub' : scene.level)
 
-  if (isLoading) {
-    return <LoadingScreen progress={progress} />
+  if (isLoading || error) {
+    return <LoadingScreen progress={progress} error={error} />
   }
 
   return (

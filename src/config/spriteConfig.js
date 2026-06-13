@@ -15,9 +15,9 @@ export const DEFAULT_ASSET_MODE = ASSET_MODE.ASSETS
 // Map of helpful asset URLs (uses Vite-friendly new URL resolution)
 export const ASSET_PATHS = {
   tiles: {
-    floor: new URL('../assets/tiles/greyG.png', import.meta.url).href,
+    floor: new URL('../assets/tiles/greyg.png', import.meta.url).href,
     wall:  new URL('../assets/tiles/redW2.png', import.meta.url).href,
-    targetGround: new URL('../assets/tiles/greyGtarget.png', import.meta.url).href,
+    targetGround: new URL('../assets/tiles/greytarget.png', import.meta.url).href,
   },
   boxes: {
     default: new URL('../assets/crates/default.png', import.meta.url).href,
@@ -63,24 +63,31 @@ export function loadAssets(onProgress = null) {
   console.log('📦 loadAssets - loading', all.length, 'images, including:', all.filter(a => a.key === 'targetGround').map(a => a.url))
 
   let loaded = 0
+  const failed = []
+
   return Promise.all(all.map(item => new Promise(res => {
     const img = new Image()
     img.onload = () => {
       loaded++
       out[item.category][item.key] = img
-      if (item.key === 'targetGround') console.log('✅ targetGround loaded successfully')
       onProgress?.(loaded, all.length, item)
       res()
     }
     img.onerror = () => {
       loaded++
-      if (item.key === 'targetGround') console.log('❌ targetGround FAILED to load from:', item.url)
-      // Leave the slot undefined so caller can fallback
+      failed.push(item)
+      console.error('❌ Asset failed to load:', item.category, item.key, item.url)
       onProgress?.(loaded, all.length, item)
       res()
     }
     img.src = item.url
-  }))).then(() => out)
+  }))).then(() => {
+    if (failed.length > 0) {
+      const missing = failed.map(item => `${item.category}.${item.key}: ${item.url}`)
+      return Promise.reject(new Error(`Asset preload failed for ${failed.length} file(s):\n${missing.join('\n')}`))
+    }
+    return out
+  })
 }
 
 // Helper: return a specific image (may be undefined if not loaded)
