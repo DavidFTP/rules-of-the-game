@@ -70,14 +70,15 @@ export function loadAssets(onProgress = null) {
     img.onload = () => {
       loaded++
       out[item.category][item.key] = img
-      onProgress?.(loaded, all.length, item)
+      if (item.key === 'targetGround') console.log('✅ targetGround loaded successfully')
+      if (typeof onProgress === 'function') onProgress(loaded, all.length, item)
       res()
     }
     img.onerror = () => {
       loaded++
-      failed.push(item)
-      console.error('❌ Asset failed to load:', item.category, item.key, item.url)
-      onProgress?.(loaded, all.length, item)
+      if (item.key === 'targetGround') console.log('❌ targetGround FAILED to load from:', item.url)
+      // Leave the slot undefined so caller can fallback
+      if (typeof onProgress === 'function') onProgress(loaded, all.length, item)
       res()
     }
     img.src = item.url

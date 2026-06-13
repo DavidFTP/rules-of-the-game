@@ -77,6 +77,8 @@ export default function GameBoard({ state, images: imagesProp = null }) {
 
 // ── Drawing ──────────────────────────────────────────────────────────────────
 
+
+
 function drawFrame(ctx, state, images) {
   const { grid, boxes, targets, specials, playerPos, player2Pos, config } = state
   const rows = grid.length
@@ -122,8 +124,33 @@ function drawFrame(ctx, state, images) {
     if (!inFog) drawPlayer(ctx, player2Pos, 2, images)
   }
 
-  // Fog overlay on top of everything
-  if (fogOn) drawFogOverlay(ctx, playerPos, rows, cols, config.fogRadius ?? 2.5)
+  // Fog overlay on top of everything (inlined to avoid function lookup issues)
+  if (fogOn) {
+    const offscreen = document.createElement('canvas')
+    offscreen.width  = cols * CS
+    offscreen.height = rows * CS
+    const oc = offscreen.getContext('2d')
+
+    oc.fillStyle = 'rgba(0,0,0,0.97)'
+    oc.fillRect(0, 0, offscreen.width, offscreen.height)
+
+    if (playerPos) {
+      const cx = playerPos.c * CS + CS / 2
+      const cy = playerPos.r * CS + CS / 2
+      const r  = (config.fogRadius ?? 2.5) * CS
+      const grad = oc.createRadialGradient(cx, cy, 0, cx, cy, r)
+      grad.addColorStop(0,    'rgba(0,0,0,1)')
+      grad.addColorStop(0.65, 'rgba(0,0,0,1)')
+      grad.addColorStop(1,    'rgba(0,0,0,0)')
+      oc.globalCompositeOperation = 'destination-out'
+      oc.fillStyle = grad
+      oc.beginPath()
+      oc.arc(cx, cy, r, 0, Math.PI * 2)
+      oc.fill()
+    }
+
+    ctx.drawImage(offscreen, 0, 0)
+  }
 
   // --- ENVIRONMENT SPECIALS (Doors) ---
   (specials || []).forEach(s => {
@@ -240,18 +267,10 @@ function drawTarget(ctx, targetObj, images) {
   }
   
   // Draw target ground tile if available
+  // Draw target ground tile if available. Do NOT draw the generic
+  // `boxes.target` gem here — that's a fallback for box rendering only.
   if (images?.tiles?.targetGround instanceof HTMLImageElement) {
     ctx.drawImage(images.tiles.targetGround, x, y, CS, CS)
-    // If we have the ground tile image, also draw gem on top if available
-    if (images?.boxes?.target instanceof HTMLImageElement) {
-      ctx.drawImage(images.boxes.target, x + 4, y + 4, CS - 8, CS - 8)
-    }
-    return
-  }
-
-  // If we have gem image but no ground tile, just draw the gem
-  if (images?.boxes?.target instanceof HTMLImageElement) {
-    ctx.drawImage(images.boxes.target, x + 4, y + 4, CS - 8, CS - 8)
     return
   }
 
@@ -301,10 +320,12 @@ function drawBox(ctx, box, onTarget, images) {
   // If we have a box image for this type (or a default), draw it
   const key = box.type in (images?.boxes || {}) ? box.type : 'default'
   const img = images?.boxes?.[key]
-  if (onTarget && images?.boxes?.target instanceof HTMLImageElement) {
-    ctx.drawImage(images.boxes.target, x + 3, y + 3, CS - 6, CS - 6)
-  } else if (img instanceof HTMLImageElement) {
+  // Prefer the typed box image. If missing, fall back to the generic
+  // `boxes.target` gem only when appropriate (i.e., no typed image).
+  if (img instanceof HTMLImageElement) {
     ctx.drawImage(img, x + 3, y + 3, CS - 6, CS - 6)
+  } else if (onTarget && images?.boxes?.target instanceof HTMLImageElement) {
+    ctx.drawImage(images.boxes.target, x + 3, y + 3, CS - 6, CS - 6)
   } else {
     ctx.fillStyle = onTarget ? '#30a050' : col.bg
     roundRect(ctx, x + 3, y + 3, CS - 6, CS - 6, 7)
@@ -370,32 +391,6 @@ function drawPlayer(ctx, pos, playerNum, images) {
   }
 }
 
-function drawFogOverlay(ctx, playerPos, rows, cols, radius) {
-  const offscreen = document.createElement('canvas')
-  offscreen.width  = cols * CS
-  offscreen.height = rows * CS
-  const oc = offscreen.getContext('2d')
-
-  oc.fillStyle = 'rgba(0,0,0,0.97)'
-  oc.fillRect(0, 0, offscreen.width, offscreen.height)
-
-  if (playerPos) {
-    const cx = playerPos.c * CS + CS / 2
-    const cy = playerPos.r * CS + CS / 2
-    const r  = radius * CS
-    const grad = oc.createRadialGradient(cx, cy, 0, cx, cy, r)
-    grad.addColorStop(0,    'rgba(0,0,0,1)')
-    grad.addColorStop(0.65, 'rgba(0,0,0,1)')
-    grad.addColorStop(1,    'rgba(0,0,0,0)')
-    oc.globalCompositeOperation = 'destination-out'
-    oc.fillStyle = grad
-    oc.beginPath()
-    oc.arc(cx, cy, r, 0, Math.PI * 2)
-    oc.fill()
-  }
-
-  ctx.drawImage(offscreen, 0, 0)
-}
 
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath()
