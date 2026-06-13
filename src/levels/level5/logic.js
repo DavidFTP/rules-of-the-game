@@ -19,7 +19,7 @@ export const rounds = [
   // ROUND 1: A little illogical pacing
   {
     map: r1Map,
-    boxes:   [{ r: 3, c: 4, type: 'green', id: 'l5-b1' }],
+    boxes:   [{ r: 3, c: 4}],
     targets: [{ r: 3, c: 6 }],
     playerStart: { r: 3, c: 2 },
     config: {
@@ -31,7 +31,7 @@ export const rounds = [
   // ROUND 2: The 7 Dips in the River
   {
     map: r2Map,
-    boxes:   [{ r: 2, c: 3, type: 'green', id: 'l5-b2' }],
+    boxes:   [{ r: 2, c: 3 }],
     targets: [{ r: 1, c: 3 }],
     playerStart: { r: 3, c: 3 },
     config: {
@@ -52,7 +52,7 @@ export const rounds = [
   // ROUND 3: The Scenic Route
   {
     map: r3Map,
-    boxes:   [{ r: 3, c: 3, type: 'green', id: 'l5-b3' }],
+    boxes:   [{ r: 3, c: 3 }],
     targets: [{ r: 1, c: 3 }],
     playerStart: { r: 4, c: 2 },
     isFinal: true,

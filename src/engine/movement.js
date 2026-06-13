@@ -45,7 +45,6 @@ export function moveEntity(state, key, playerKey = 'playerPos', onBeforeBoxPush 
     if (onBeforeBoxPush) {
       const result = onBeforeBoxPush(state, pushedBox, playerKey === 'playerPos' ? 1 : 2, dir.dc, dir.dr);
       if (!result.allowed) {
-        // Push is blocked! Return the error text for the GameBoard to render
         return { 
           ...state, 
           _bump: true, 
@@ -55,9 +54,30 @@ export function moveEntity(state, key, playerKey = 'playerPos', onBeforeBoxPush 
     }
 
     if (isWall(grid, br2, bc2)) return { ...state, _bump: true, _boxError: null }
-    if (findBoxAt(boxes, br2, bc2) !== -1) return { ...state, _bump: true, _boxError: null }
-    // Can't push box into other player
+
+    // --- 💪 SUPER PUSH LOGIC ---
+    let secondBoxIdx = findBoxAt(boxes, br2, bc2);
+    let br3, bc3;
+
+    if (secondBoxIdx !== -1) {
+      // We hit a second box. Do we have the Super Push powerup?
+      if (state.activePowerups?.includes('superPush')) {
+        br3 = br2 + dir.dr;
+        bc3 = bc2 + dir.dc;
+        
+        // Check if the space behind the SECOND box is blocked
+        if (isWall(grid, br3, bc3)) return { ...state, _bump: true, _boxError: null };
+        if (findBoxAt(boxes, br3, bc3) !== -1) return { ...state, _bump: true, _boxError: null }; // Can't push 3 boxes!
+        if (otherPos && otherPos.r === br3 && otherPos.c === bc3) return { ...state, _bump: true, _boxError: null };
+      } else {
+        // No super push active, so block the push
+        return { ...state, _bump: true, _boxError: null };
+      }
+    }
+    
+    // Can't push a box into the other player
     if (otherPos && otherPos.r === br2 && otherPos.c === bc2) return { ...state, _bump: true, _boxError: null }
+
 
     // Crack tile logic — only triggers for heavy/gold boxes
     if (isCrack(grid, br2, bc2) && pushedBox.type === 'gold') {
@@ -74,27 +94,37 @@ export function moveEntity(state, key, playerKey = 'playerPos', onBeforeBoxPush 
       }
     }
 
-    // --- CHRONOLOGICAL TRACKING (THE FIX) ---
+    // --- CHRONOLOGICAL TRACKING ---
+    let newPlacedOrder = state.placedOrder ? [...state.placedOrder] : [];
+    
+    // Track Box 1
     const wasOnTarget = isTarget(targets, pushedBox.r, pushedBox.c);
     const isNowOnTarget = isTarget(targets, br2, bc2);
-    
-    // Copy the existing timeline, or start a new one if it doesn't exist
-    let newPlacedOrder = state.placedOrder ? [...state.placedOrder] : [];
-
-    if (!wasOnTarget && isNowOnTarget) {
-      // Box just landed on a target -> Add to timeline
-      newPlacedOrder.push(pushedBox.type);
-    } else if (wasOnTarget && !isNowOnTarget) {
-      // Box was pushed OFF a target -> Remove from timeline
+    if (!wasOnTarget && isNowOnTarget) newPlacedOrder.push(pushedBox.type);
+    else if (wasOnTarget && !isNowOnTarget) {
       const idx = newPlacedOrder.lastIndexOf(pushedBox.type);
       if (idx !== -1) newPlacedOrder.splice(idx, 1);
     }
-    // ----------------------------------------
+    let isNowOnTarget2 = false;
 
+    // Track Box 2 (If Super Pushing)
+    if (secondBoxIdx !== -1) {
+      const box2 = boxes[secondBoxIdx];
+      const wasOnTarget2 = isTarget(targets, box2.r, box2.c);
+      const isNowOnTarget2 = isTarget(targets, br3, bc3);
+      if (!wasOnTarget2 && isNowOnTarget2) newPlacedOrder.push(box2.type);
+      else if (wasOnTarget2 && !isNowOnTarget2) {
+        const idx2 = newPlacedOrder.lastIndexOf(box2.type);
+        if (idx2 !== -1) newPlacedOrder.splice(idx2, 1);
+      }
+    }
+
+    // Apply movement to both boxes
     const newBoxes = boxes.map((b, i) => {
-      if (i !== boxIdx) return b
-      return { ...b, r: br2, c: bc2, onTarget: isTarget(targets, br2, bc2) }
-    })
+      if (i === boxIdx) return { ...b, r: br2, c: bc2, onTarget: isNowOnTarget };
+      if (i === secondBoxIdx) return { ...b, r: br3, c: bc3, onTarget: isNowOnTarget2 };
+      return b;
+    });
 
     const dirMap = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }
     const newDir = dirMap[key] ?? pos.dir ?? 'down'
@@ -102,7 +132,7 @@ export function moveEntity(state, key, playerKey = 'playerPos', onBeforeBoxPush 
       ...state,
       [playerKey]: { r: nr, c: nc, dir: newDir },
       boxes: newBoxes,
-      placedOrder: newPlacedOrder, // Inject the updated timeline here
+      placedOrder: newPlacedOrder,
       moves: state.moves + 1,
       _bump: false,
       _crackLose: false,

@@ -29,8 +29,8 @@ export const rounds = [
   {
     map: round2Map,
     boxes: [
-      { r: 3, c: 2, type: 'green', id: 'r2-green' },
-      { r: 4, c: 7, type: 'blue',  id: 'r2-blue'  },
+      { r: 3, c: 2, type: 'brown', id: 'r2-green' },
+      { r: 4, c: 7,  id: 'r2-blue'  },
     ],
     targets: [
       { r: 1, c: 7 },
