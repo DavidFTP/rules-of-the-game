@@ -60,17 +60,21 @@ export function loadAssets(onProgress = null) {
   Object.entries(ASSET_PATHS.sprites).forEach(([k, v]) => push('sprites', k, v))
   Object.entries(ASSET_PATHS.currency).forEach(([k, v]) => push('currency', k, v))
 
+  console.log('📦 loadAssets - loading', all.length, 'images, including:', all.filter(a => a.key === 'targetGround').map(a => a.url))
+
   let loaded = 0
   return Promise.all(all.map(item => new Promise(res => {
     const img = new Image()
     img.onload = () => {
       loaded++
       out[item.category][item.key] = img
+      if (item.key === 'targetGround') console.log('✅ targetGround loaded successfully')
       onProgress?.(loaded, all.length, item)
       res()
     }
     img.onerror = () => {
       loaded++
+      if (item.key === 'targetGround') console.log('❌ targetGround FAILED to load from:', item.url)
       // Leave the slot undefined so caller can fallback
       onProgress?.(loaded, all.length, item)
       res()

@@ -233,6 +233,12 @@ function drawTarget(ctx, targetObj, images) {
   // Look up the color based on the target type, default to green
   const boxData = type && BOX_COLORS[type] ? BOX_COLORS[type] : BOX_COLORS.green;
   
+  // DEBUG: Log what we have
+  if (r === 0 && c === 0) {
+    console.log('🎯 drawTarget called - images.tiles.targetGround:', images?.tiles?.targetGround, 'is HTMLImageElement?', images?.tiles?.targetGround instanceof HTMLImageElement)
+    console.log('   Full images.tiles:', images?.tiles)
+  }
+  
   // Draw target ground tile if available
   if (images?.tiles?.targetGround instanceof HTMLImageElement) {
     ctx.drawImage(images.tiles.targetGround, x, y, CS, CS)

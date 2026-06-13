@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import GameBoard   from '../canvas/GameBoard.jsx'
-import { loadAssets } from '../../config/spriteConfig.js'
+import { useAssets } from '../../contexts/AssetContext.jsx'
 import TopStrip    from '../layout/TopStrip.jsx'
 import BottomStrip from '../layout/BottomStrip.jsx'
 import DPad        from '../ui/DPad.jsx'
@@ -25,6 +25,7 @@ export default function LevelScreen({ levelNum, onHub }) {
   const levelData     = LEVELS[levelNum]
   const canvasAreaRef = useRef(null)
   const isTouch       = useTouchDevice()
+  const { images } = useAssets()
 
   const [showLevelWin,   setShowLevelWin]   = useState(false)
   const [showRoundWin,   setShowRoundWin]   = useState(false)
@@ -32,18 +33,6 @@ export default function LevelScreen({ levelNum, onHub }) {
   const [completedRound, setCompletedRound] = useState(null)
 
   const { bag, buy, purchases } = useTokens()
-
-  const [images, setImages] = useState(null)
-  const [loadingAssets, setLoadingAssets] = useState(true)
-
-  useEffect(() => {
-    let mounted = true
-    setLoadingAssets(true)
-    loadAssets()
-      .then(imgs => { if (mounted) { setImages(imgs); setLoadingAssets(false) } })
-      .catch(() => { if (mounted) setLoadingAssets(false) })
-    return () => { mounted = false }
-  }, [])
 
   const {
     state,
@@ -92,13 +81,7 @@ export default function LevelScreen({ levelNum, onHub }) {
       />
 
       <div className={styles.canvasArea} ref={canvasAreaRef} style={{ position: 'relative' }}>
-        {loadingAssets ? (
-          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-            Loading assets...
-          </div>
-        ) : (
-          <GameBoard state={state} images={images} />
-        )}
+        <GameBoard state={state} images={images} />
         
         {/* --- SIMON SAYS LOSE MODAL --- */}
         {state?._showSimonLose && (
