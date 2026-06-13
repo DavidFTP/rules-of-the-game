@@ -67,6 +67,8 @@ export default function GameBoard({ state, images: imagesProp = null }) {
 
 // ── Drawing ──────────────────────────────────────────────────────────────────
 
+
+
 function drawFrame(ctx, state, images) {
   const { grid, boxes, targets, specials, playerPos, player2Pos, config } = state
   const rows = grid.length
@@ -118,8 +120,33 @@ function drawFrame(ctx, state, images) {
     if (!inFog) drawPlayer(ctx, player2Pos, 2, images, p2Offset)
   }
 
-  // Fog overlay
-  if (fogOn) drawFogOverlay(ctx, playerPos, rows, cols, config.fogRadius ?? 2.5)
+  // Fog overlay on top of everything (inlined to avoid function lookup issues)
+  if (fogOn) {
+    const offscreen = document.createElement('canvas')
+    offscreen.width  = cols * CS
+    offscreen.height = rows * CS
+    const oc = offscreen.getContext('2d')
+
+    oc.fillStyle = 'rgba(0,0,0,0.97)'
+    oc.fillRect(0, 0, offscreen.width, offscreen.height)
+
+    if (playerPos) {
+      const cx = playerPos.c * CS + CS / 2
+      const cy = playerPos.r * CS + CS / 2
+      const r  = (config.fogRadius ?? 2.5) * CS
+      const grad = oc.createRadialGradient(cx, cy, 0, cx, cy, r)
+      grad.addColorStop(0,    'rgba(0,0,0,1)')
+      grad.addColorStop(0.65, 'rgba(0,0,0,1)')
+      grad.addColorStop(1,    'rgba(0,0,0,0)')
+      oc.globalCompositeOperation = 'destination-out'
+      oc.fillStyle = grad
+      oc.beginPath()
+      oc.arc(cx, cy, r, 0, Math.PI * 2)
+      oc.fill()
+    }
+
+    ctx.drawImage(offscreen, 0, 0)
+  }
 
   ;(specials || []).forEach(s => {
     const inFog = visible && !visible.has(`${s.r},${s.c}`);
@@ -241,16 +268,17 @@ function drawTarget(ctx, targetObj, images) {
   const x = c * CS, y = r * CS;
   const boxData = type && BOX_COLORS[type] ? BOX_COLORS[type] : BOX_COLORS.green;
   
+  // DEBUG: Log what we have
+  if (r === 0 && c === 0) {
+    console.log('🎯 drawTarget called - images.tiles.targetGround:', images?.tiles?.targetGround, 'is HTMLImageElement?', images?.tiles?.targetGround instanceof HTMLImageElement)
+    console.log('   Full images.tiles:', images?.tiles)
+  }
+  
+  // Draw target ground tile if available
+  // Draw target ground tile if available. Do NOT draw the generic
+  // `boxes.target` gem here — that's a fallback for box rendering only.
   if (images?.tiles?.targetGround instanceof HTMLImageElement) {
     ctx.drawImage(images.tiles.targetGround, x, y, CS, CS)
-    if (images?.boxes?.target instanceof HTMLImageElement) {
-      ctx.drawImage(images.boxes.target, x + 4, y + 4, CS - 8, CS - 8)
-    }
-    return
-  }
-
-  if (images?.boxes?.target instanceof HTMLImageElement) {
-    ctx.drawImage(images.boxes.target, x + 4, y + 4, CS - 8, CS - 8)
     return
   }
 
@@ -297,11 +325,12 @@ function drawBox(ctx, box, onTarget, images) {
   const col = BOX_COLORS[box.type] ?? BOX_COLORS.green
   const key = box.type in (images?.boxes || {}) ? box.type : 'default'
   const img = images?.boxes?.[key]
-  
-  if (onTarget && images?.boxes?.target instanceof HTMLImageElement) {
-    ctx.drawImage(images.boxes.target, x + 3, y + 3, CS - 6, CS - 6)
-  } else if (img instanceof HTMLImageElement) {
+  // Prefer the typed box image. If missing, fall back to the generic
+  // `boxes.target` gem only when appropriate (i.e., no typed image).
+  if (img instanceof HTMLImageElement) {
     ctx.drawImage(img, x + 3, y + 3, CS - 6, CS - 6)
+  } else if (onTarget && images?.boxes?.target instanceof HTMLImageElement) {
+    ctx.drawImage(images.boxes.target, x + 3, y + 3, CS - 6, CS - 6)
   } else {
     ctx.fillStyle = onTarget ? '#30a050' : col.bg
     roundRect(ctx, x + 3, y + 3, CS - 6, CS - 6, 7)
@@ -367,32 +396,6 @@ function drawPlayer(ctx, pos, playerNum, images, xOffset = 0) {
   }
 }
 
-function drawFogOverlay(ctx, playerPos, rows, cols, radius) {
-  const offscreen = document.createElement('canvas')
-  offscreen.width  = cols * CS
-  offscreen.height = rows * CS
-  const oc = offscreen.getContext('2d')
-
-  oc.fillStyle = 'rgba(0,0,0,0.97)'
-  oc.fillRect(0, 0, offscreen.width, offscreen.height)
-
-  if (playerPos) {
-    const cx = playerPos.c * CS + CS / 2
-    const cy = playerPos.r * CS + CS / 2
-    const r  = radius * CS
-    const grad = oc.createRadialGradient(cx, cy, 0, cx, cy, r)
-    grad.addColorStop(0,    'rgba(0,0,0,1)')
-    grad.addColorStop(0.65, 'rgba(0,0,0,1)')
-    grad.addColorStop(1,    'rgba(0,0,0,0)')
-    oc.globalCompositeOperation = 'destination-out'
-    oc.fillStyle = grad
-    oc.beginPath()
-    oc.arc(cx, cy, r, 0, Math.PI * 2)
-    oc.fill()
-  }
-
-  ctx.drawImage(offscreen, 0, 0)
-}
 
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath()
