@@ -237,9 +237,21 @@ const handleMove = useCallback((key, playerKey) => {
           next.placedOrder = [...(current.placedOrder ?? []), ...justPlaced.map(b => b.type)];
           
           // 🚨 INSTANT LOSE CHECK! Did they place a box out of order?
+          const reqOrder = current.requiredOrder || cfg.requiredOrder;
+          if (reqOrder) {
+            for (let i = 0; i < next.placedOrder.length; i++) {
+              if (next.placedOrder[i] !== reqOrder[i]) {
+                console.log(`Box placed out of order! Expected ${reqOrder[i]}, but got ${next.placedOrder[i]}.`);
+                next._showOrderLose = true;
+                next.orderLoseMessage = "Follow the rules! Box is not in the correct order!";
+                break; // Stop checking, they already failed
+              }
+            }
+          }
+
+          // (Keep any Level 6 specific logic you had here as well)
           if (cfg.theme === 'level6' && next.roundIndex > 0 && next.chosenPath === 'right') {
             const placed = next.placedOrder;
-            // If the first box they put on a target is NOT blue, instantly fail them!
             if (placed.length === 1 && placed[0] !== 'blue') {
               next._showZoneLose = true;
               next.zoneLoseMessage = "You chose the True Path, but disobeyed the order! (You must place Blue first, then Red).";
@@ -247,7 +259,6 @@ const handleMove = useCallback((key, playerKey) => {
           }
         }
       }
-
       return next;
     })
   }, [])

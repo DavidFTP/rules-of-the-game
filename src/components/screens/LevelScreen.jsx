@@ -101,12 +101,13 @@ export default function LevelScreen({ levelNum, onHub }) {
   return (
     <div className={styles.wrap}>
       <TopStrip
-        config={currentConfig}
+        config={config}
         state={state}
         levelNum={levelNum}
         restarts={restarts}
         roundIndex={roundIndex}
         totalRounds={totalRounds}
+        onTutorialClick={() => setShowTutorial(true)} // 👈 ADD THIS
       />
 
       <div className={styles.canvasArea} ref={canvasAreaRef} style={{ position: 'relative' }}>
@@ -135,6 +136,27 @@ export default function LevelScreen({ levelNum, onHub }) {
                   👥 2 Players (Co-op)
                 </button>
               </div>
+            </div>
+          </Modal>
+        )}
+
+        {/* --- INCORRECT ORDER LOSE MODAL --- */}
+        {state?._showOrderLose && (
+          <Modal title="❌ Incorrect Order!" onClose={() => {}}>
+            <div style={{ textAlign: 'center', padding: '10px', lineHeight: '1.8' }}>
+              <p style={{ fontSize: '1.2rem', marginBottom: '15px', color: '#ffbbbb' }}>
+                {state.orderLoseMessage}
+              </p>
+              <button 
+                onClick={handleRestart}
+                style={{
+                  width: '100%', padding: '12px', marginTop: '20px',
+                  backgroundColor: '#e94560', color: 'white', border: 'none',
+                  borderRadius: '6px', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer'
+                }}
+              >
+                ↻ Restart Round
+              </button>
             </div>
           </Modal>
         )}
@@ -223,54 +245,56 @@ export default function LevelScreen({ levelNum, onHub }) {
           </>
         )}
 
-        {/* --- TUTORIAL BUTTON --- */}
-        {config?.hasTutorialButton && (
-          <button 
-            onClick={() => setShowTutorial(true)}
-            style={{
-              position: 'absolute',
-              top: '10px',
-              right: '10px',
-              padding: '8px 16px',
-              backgroundColor: 'var(--theme-primary, #333)',
-              color: '#fff',
-              border: '2px solid rgba(255,255,255,0.3)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              zIndex: 10,
-              boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-            }}
-          >
-            ❓ Read Rules
-          </button>
-        )}
-
         {/* --- TUTORIAL MODAL --- */}
         {showTutorial && (
-          <Modal title="Level Rules" onClose={() => setShowTutorial(false)}>
-            <div style={{ textAlign: 'right', direction: 'rtl', padding: '10px', lineHeight: '1.8' }}>
+          <Modal onClose={() => setShowTutorial(false)}>
+            {/* Inner wrapper to strictly control size, border, and background */}
+            <div style={{ 
+              maxWidth: '420px',           // Makes the modal significantly smaller
+              margin: '0 auto',            // Centers it inside the parent modal box
+              border: '4px solid #FFD700', // Clear, thick golden border
+              borderRadius: '12px',        // Smooth rounded corners
+              backgroundColor: '#1a1a2e',  // Dark background so the text and border pop
+              padding: '24px',             
+              textAlign: 'center', 
+              direction: 'ltr', 
+              lineHeight: '1.5',
+              boxShadow: '0px 10px 30px rgba(0,0,0,0.8)' // Deep shadow
+            }}>
+              
+              <h2 style={{ margin: '0 0 15px 0', color: '#FFD700', fontSize: '1.4rem' }}>
+                Level Rules
+              </h2>
+
               {config.tutorialSegments?.map((seg, i) => (
-                <p key={i} style={{ margin: '0 0 10px 0', fontSize: '1.1rem', color: seg.includes('⚠️') ? 'red' : 'inherit' }}>
+                <p key={i} style={{ 
+                  margin: '0 0 10px 0', 
+                  fontSize: '1rem', // Smaller text to fit the new layout
+                  color: seg.includes('⚠️') ? '#ff6b6b' : '#e0e0e0', 
+                  fontWeight: seg.includes('⚠️') ? 'bold' : 'normal'
+                }}>
                   {seg}
                 </p>
               ))}
+              
               <button 
                 onClick={() => setShowTutorial(false)}
                 style={{
                   width: '100%',
                   padding: '12px',
-                  marginTop: '10px',
+                  marginTop: '15px',
                   backgroundColor: '#28a745',
                   color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '1.2rem',
+                  border: '2px solid #ffffff', // Clear border around the button too
+                  borderRadius: '8px',
+                  fontSize: '1.1rem',
                   fontWeight: 'bold',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  textTransform: 'uppercase'
                 }}
               >
-                I Understand the Secret!
+                I Understand!
               </button>
             </div>
           </Modal>

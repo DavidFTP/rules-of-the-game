@@ -1,7 +1,8 @@
 import React from 'react'
 import styles from './TopStrip.module.css'
 
-export default function TopStrip({ config, state, levelNum, restarts, roundIndex, totalRounds }) {
+
+export default function TopStrip({ config, state, levelNum, restarts, roundIndex, totalRounds, onTutorialClick }) {
   // 💡 OVERRIDE FOR LEVEL 6: Force it to display 2 rounds!
   const isLevel6 = config?.theme === 'level6' || state?.config?.theme === 'level6';
   const displayTotal = isLevel6 ? 2 : totalRounds;
@@ -11,16 +12,46 @@ export default function TopStrip({ config, state, levelNum, restarts, roundIndex
     ? <span className={styles.roundBadge}>Round {displayRound}/{displayTotal}</span>
     : null
 
-  if (!config) return <DefaultStrip levelNum={levelNum} state={state} roundInfo={roundInfo} />
+  const isClickable = !!config?.hasTutorialButton;
 
-  switch (config.topStripMode) {
-    case 'marquee':  return <MarqueeStrip   config={config} state={state} levelNum={levelNum} roundInfo={roundInfo} />
-    case 'narrative':return <NarrativeStrip config={config} state={state} levelNum={levelNum} roundInfo={roundInfo} />
-    case 'council':  return <CouncilStrip   config={config} state={state} roundInfo={roundInfo} />
-    case 'simon':    return <SimonStrip     config={config} state={state} levelNum={levelNum} />
-    case 'hints':    return <HintsStrip     config={config} restarts={restarts} roundInfo={roundInfo} />
-    default:         return <DefaultStrip   levelNum={levelNum} state={state} roundInfo={roundInfo} />
+  // Wrap your existing logic in a helper function
+  const renderStrip = () => {
+    if (!config) return <DefaultStrip levelNum={levelNum} state={state} roundInfo={roundInfo} />
+    
+    switch (config.topStripMode) {
+      case 'marquee':  return <MarqueeStrip   config={config} state={state} levelNum={levelNum} roundInfo={roundInfo} />
+      case 'narrative':return <NarrativeStrip config={config} state={state} levelNum={levelNum} roundInfo={roundInfo} />
+      case 'council':  return <CouncilStrip   config={config} state={state} roundInfo={roundInfo} />
+      case 'simon':    return <SimonStrip     config={config} state={state} levelNum={levelNum} />
+      case 'hints':    return <HintsStrip     config={config} restarts={restarts} roundInfo={roundInfo} />
+      default:         return <DefaultStrip   levelNum={levelNum} state={state} roundInfo={roundInfo} />
+    }
   }
+
+  return (
+    <div 
+      onClick={isClickable ? onTutorialClick : undefined} 
+      style={{ 
+        position: 'relative', 
+        cursor: isClickable ? 'pointer' : 'default',
+        opacity: isClickable ? 0.95 : 1 // Slight visual hint that it's clickable
+      }}
+      title={isClickable ? "Click to read the rules" : ""}
+    >
+      {renderStrip()}
+      
+      {/* Small floating hint on the right side if rules are available */}
+      {isClickable && (
+        <div style={{
+          position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)',
+          fontSize: '0.9rem', color: '#FFD700', fontWeight: 'bold', textShadow: '1px 1px 2px #000',
+          zIndex: 10
+        }}>
+          ❓ Rules
+        </div>
+      )}
+    </div>
+  )
 }
 
 function CouncilStrip({ config, state, roundInfo }) {
