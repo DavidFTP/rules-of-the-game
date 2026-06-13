@@ -15,7 +15,7 @@ export const DEFAULT_ASSET_MODE = ASSET_MODE.ASSETS
 // Map of helpful asset URLs (uses Vite-friendly new URL resolution)
 export const ASSET_PATHS = {
   tiles: {
-    floor: new URL('../assets/tiles/greyG.png', import.meta.url).href,
+    floor: new URL('../assets/tiles/greyg.png', import.meta.url).href,
     wall:  new URL('../assets/tiles/redW2.png', import.meta.url).href,
     targetGround: new URL('../assets/tiles/greyGtarget.png', import.meta.url).href,
   },
@@ -69,14 +69,14 @@ export function loadAssets(onProgress = null) {
       loaded++
       out[item.category][item.key] = img
       if (item.key === 'targetGround') console.log('✅ targetGround loaded successfully')
-      onProgress?.(loaded, all.length, item)
+      if (typeof onProgress === 'function') onProgress(loaded, all.length, item)
       res()
     }
     img.onerror = () => {
       loaded++
       if (item.key === 'targetGround') console.log('❌ targetGround FAILED to load from:', item.url)
       // Leave the slot undefined so caller can fallback
-      onProgress?.(loaded, all.length, item)
+      if (typeof onProgress === 'function') onProgress(loaded, all.length, item)
       res()
     }
     img.src = item.url

@@ -41,7 +41,9 @@ export function parseMap(mapLines, overrides = {}) {
           break
         case 'T':
           row.push(T.TARGET)
-          targets.push({ r, c })
+          // Targets now carry a `type` so logic and rendering can match
+          // against box types. Default to 'green' (matches box default).
+          targets.push({ r, c, type: 'green' })
           break
         case 'B':
           row.push(T.FLOOR)
@@ -49,7 +51,7 @@ export function parseMap(mapLines, overrides = {}) {
           break
         case 'O':
           row.push(T.TARGET)
-          targets.push({ r, c })
+          targets.push({ r, c, type: 'green' })
           boxes.push({ r, c, type: 'green', id: `box-${r}-${c}`, onTarget: true })
           break
         case 'P':
@@ -90,12 +92,16 @@ export function parseMap(mapLines, overrides = {}) {
     grid.push(row)
   })
 
+  // Normalize override-provided boxes/targets so they always include a `type`.
+  const resolvedBoxes = (overrides.boxes ?? boxes).map(b => ({ ...b, type: b.type ?? 'green' }))
+  const resolvedTargets = (overrides.targets ?? targets).map(t => ({ ...t, type: t.type ?? 'green' }))
+
   return {
     grid,
     playerPos:   overrides.playerStart   ?? playerPos,
     player2Pos:  overrides.player2Start  ?? player2Pos,
-    boxes:       overrides.boxes         ?? boxes,
-    targets:     overrides.targets       ?? targets,
+    boxes:       resolvedBoxes,
+    targets:     resolvedTargets,
     specials,
     moves:       0,
     tokens:      0,
