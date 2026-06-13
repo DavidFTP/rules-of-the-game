@@ -22,7 +22,6 @@ export default function GameBoard({ state, images: imagesProp = null }) {
     drawFrame(ctx, state, images)
   }, [state, imagesProp])
 
-  // Scale canvas to fit container whenever state changes (grid size may vary)
   useEffect(() => {
     if (!state || !canvasRef.current || !containerRef.current) return
     const canvas    = canvasRef.current
@@ -37,10 +36,8 @@ export default function GameBoard({ state, images: imagesProp = null }) {
     canvas.style.left = `${(cw - canvas.width  * scale) / 2}px`
   }, [state])
 
-  // Load assets when assetMode changes
   useEffect(() => {
     let mounted = true
-    // If parent supplied images, don't auto-load here
     if (imagesProp) return () => { mounted = false }
     imagesRef.current = null
     if (assetMode === ASSET_MODE.ASSETS) {
@@ -58,13 +55,6 @@ export default function GameBoard({ state, images: imagesProp = null }) {
 
   return (
     <div ref={containerRef} className={styles.wrap}>
-      <div style={{ position: 'absolute', zIndex: 2, right: 8, top: 8 }}>
-        {/*<select value={assetMode} onChange={e => setAssetMode(e.target.value)}>
-          <option value={ASSET_MODE.ASSETS}>Use Assets</option>
-          <option value={ASSET_MODE.SHEET}>Use Spritesheet</option>
-          <option value={ASSET_MODE.NONE}>Fallback Only</option>
-        </select>*/}
-      </div>
       <canvas
         ref={canvasRef}
         width={cols * CS}
@@ -85,11 +75,12 @@ function drawFrame(ctx, state, images) {
   ctx.clearRect(0, 0, cols * CS, rows * CS)
 
   const fogOn  = config?.fogOfWar && !state.fogLifted
+  
+  // Safe fog check that will not crash on the first render
   const visible = fogOn
-    ? getVisibleCells(playerPos, config.fogRadius ?? 2.5, rows, cols)
+    ? (playerPos ? getVisibleCells(playerPos, config.fogRadius ?? 2.5, rows, cols) : new Set())
     : null
 
-  // Tiles
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const inFog = visible && !visible.has(`${r},${c}`)
@@ -97,13 +88,11 @@ function drawFrame(ctx, state, images) {
     }
   }
 
-  // Targets
   targets.forEach(t => {
     const inFog = visible && !visible.has(`${t.r},${t.c}`)
     if (!inFog) drawTarget(ctx, t, images)
   })
 
-  // Boxes
   boxes.forEach(b => {
     const inFog = visible && !visible.has(`${b.r},${b.c}`)
       if (!inFog) {
@@ -112,11 +101,9 @@ function drawFrame(ctx, state, images) {
     }
   })
 
-  // Players
   let p1Offset = 0;
   let p2Offset = 0;
 
-  // If they are on the same tile, shift P1 left and P2 right!
   if (playerPos && player2Pos && playerPos.r === player2Pos.r && playerPos.c === player2Pos.c) {
     p1Offset = -10;
     p2Offset = 10;
@@ -131,43 +118,39 @@ function drawFrame(ctx, state, images) {
     if (!inFog) drawPlayer(ctx, player2Pos, 2, images, p2Offset)
   }
 
-  // Fog overlay on top of everything
+  // Fog overlay
   if (fogOn) drawFogOverlay(ctx, playerPos, rows, cols, config.fogRadius ?? 2.5)
 
-  // --- ENVIRONMENT SPECIALS (Doors) ---
-  (specials || []).forEach(s => {
+  ;(specials || []).forEach(s => {
     const inFog = visible && !visible.has(`${s.r},${s.c}`);
     if (!inFog && s.type === 'door') {
       drawDoor(ctx, s.c * CS, s.r * CS, images);
     }
   });
 
-  // --- ITEM SPECIALS (Coins) ---
-  (specials || []).forEach(s => {
+  ;(specials || []).forEach(s => {
     const inFog = visible && !visible.has(`${s.r},${s.c}`);
     if (!inFog && s.type === 'coin') {
       drawCoin(ctx, s.c * CS, s.r * CS, images);
     }
   });
 
-  // --- FLOATING TEXT ERROR (Heavy Boxes) ---
   if (state._boxError) {
     const { text, r, c, opacity = 1 } = state._boxError;
     const x = c * CS + (CS / 2);
-    const y = r * CS - 10; // Float slightly above the box
+    const y = r * CS - 10; 
     
     ctx.globalAlpha = opacity;
     ctx.fillStyle = 'white';
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'center';
     
-    // Draw text outline for visibility
     ctx.lineWidth = 3;
     ctx.strokeStyle = 'red';
     ctx.strokeText(text, x, y);
     ctx.fillText(text, x, y);
     
-    ctx.globalAlpha = 1.0; // Reset alpha
+    ctx.globalAlpha = 1.0;
   }
 }
 
@@ -183,24 +166,22 @@ function drawCell(ctx, type, r, c, inFog, specials, images) {
     if (isGate) {
       drawGate(ctx, x, y)
     } else {
-    const isDestructible = specials?.some(s => s.type === 'destructible' && s.r === r && s.c === c);
+      const isDestructible = specials?.some(s => s.type === 'destructible' && s.r === r && s.c === c);
 
-    // If we have a wall tile image, use it; otherwise fall back to drawWall
-    if (images?.tiles?.wall instanceof HTMLImageElement) {
-      ctx.drawImage(images.tiles.wall, x, y, CS, CS)
-    } else {
-      drawWall(ctx, x, y); // Draw the base wall first
-    }
+      if (images?.tiles?.wall instanceof HTMLImageElement) {
+        ctx.drawImage(images.tiles.wall, x, y, CS, CS)
+      } else {
+        drawWall(ctx, x, y); 
+      }
 
-    if (isDestructible) {
-      // Draw red cracks over it so they know they can break it!
-      ctx.strokeStyle = 'rgba(255, 80, 80, 0.9)';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(x + 10, y + 10); ctx.lineTo(x + CS - 10, y + CS - 10);
-      ctx.moveTo(x + CS - 10, y + 10); ctx.lineTo(x + 10, y + CS - 10);
-      ctx.stroke();
-    }
+      if (isDestructible) {
+        ctx.strokeStyle = 'rgba(255, 80, 80, 0.9)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x + 10, y + 10); ctx.lineTo(x + CS - 10, y + CS - 10);
+        ctx.moveTo(x + CS - 10, y + 10); ctx.lineTo(x + 10, y + CS - 10);
+        ctx.stroke();
+      }
     }
   } else if (type === T.CRACK) {
     drawCrack(ctx, x, y)
@@ -258,35 +239,23 @@ function drawSwitch(ctx, x, y, active) {
 function drawTarget(ctx, targetObj, images) {
   const { r, c, type } = targetObj;
   const x = c * CS, y = r * CS;
-  
-  // Look up the color based on the target type, default to green
   const boxData = type && BOX_COLORS[type] ? BOX_COLORS[type] : BOX_COLORS.green;
   
-  // DEBUG: Log what we have
-  if (r === 0 && c === 0) {
-    console.log('🎯 drawTarget called - images.tiles.targetGround:', images?.tiles?.targetGround, 'is HTMLImageElement?', images?.tiles?.targetGround instanceof HTMLImageElement)
-    console.log('   Full images.tiles:', images?.tiles)
-  }
-  
-  // Draw target ground tile if available
   if (images?.tiles?.targetGround instanceof HTMLImageElement) {
     ctx.drawImage(images.tiles.targetGround, x, y, CS, CS)
-    // If we have the ground tile image, also draw gem on top if available
     if (images?.boxes?.target instanceof HTMLImageElement) {
       ctx.drawImage(images.boxes.target, x + 4, y + 4, CS - 8, CS - 8)
     }
     return
   }
 
-  // If we have gem image but no ground tile, just draw the gem
   if (images?.boxes?.target instanceof HTMLImageElement) {
     ctx.drawImage(images.boxes.target, x + 4, y + 4, CS - 8, CS - 8)
     return
   }
 
-  // Fallback to canvas drawing
   ctx.fillStyle = boxData.bg;
-  ctx.globalAlpha = 0.3; // Make the background semi-transparent
+  ctx.globalAlpha = 0.3; 
   ctx.fillRect(x + 4, y + 4, CS - 8, CS - 8);
   ctx.globalAlpha = 1.0; 
 
@@ -301,7 +270,6 @@ function drawTarget(ctx, targetObj, images) {
 }
 
 function drawGate(ctx, x, y) {
-  // Draw a metallic looking door
   ctx.fillStyle = '#445566';
   ctx.fillRect(x, y, CS, CS);
   ctx.fillStyle = '#223344';
@@ -327,9 +295,9 @@ const BOX_COLORS = {
 function drawBox(ctx, box, onTarget, images) {
   const x = box.c * CS, y = box.r * CS
   const col = BOX_COLORS[box.type] ?? BOX_COLORS.green
-  // If we have a box image for this type (or a default), draw it
   const key = box.type in (images?.boxes || {}) ? box.type : 'default'
   const img = images?.boxes?.[key]
+  
   if (onTarget && images?.boxes?.target instanceof HTMLImageElement) {
     ctx.drawImage(images.boxes.target, x + 3, y + 3, CS - 6, CS - 6)
   } else if (img instanceof HTMLImageElement) {
@@ -363,9 +331,9 @@ function drawPlayer(ctx, pos, playerNum, images, xOffset = 0) {
   const x = pos.c * CS + xOffset, y = pos.r * CS
   const isP2 = playerNum === 2
   const dir = pos.dir ?? 'down'
-  // Map direction to sprite key using helper
   const spriteKey = dirToSpriteKey(dir)
   const img = images?.sprites?.[spriteKey]
+  
   if (img instanceof HTMLImageElement) {
     ctx.drawImage(img, x + 6, y + 2, CS - 12, CS - 12)
     return
@@ -436,7 +404,6 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath()
 }
 
-
 function drawCoin(ctx, x, y, images) {
   const cx = x + CS / 2;
   const cy = y + CS / 2;
@@ -445,7 +412,6 @@ function drawCoin(ctx, x, y, images) {
     return
   }
 
-  // Outer gold ring
   ctx.fillStyle = '#FFD700';
   ctx.beginPath();
   ctx.arc(cx, cy, 12, 0, Math.PI * 2);
@@ -454,7 +420,6 @@ function drawCoin(ctx, x, y, images) {
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  // Inner dollar sign
   ctx.fillStyle = '#B8860B';
   ctx.font = 'bold 16px monospace';
   ctx.textAlign = 'center';
@@ -463,16 +428,13 @@ function drawCoin(ctx, x, y, images) {
 }
 
 function drawDoor(ctx, x, y, images) {
-  // Dark opening
   ctx.fillStyle = '#111'; 
   ctx.fillRect(x, y, CS, CS);
   
-  // Outer frame
   ctx.strokeStyle = '#555';
   ctx.lineWidth = 4;
   ctx.strokeRect(x, y, CS, CS);
   
-  // Inner mysterious glow
   ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
   ctx.fillRect(x + 4, y + 4, CS - 8, CS - 8);
 }
