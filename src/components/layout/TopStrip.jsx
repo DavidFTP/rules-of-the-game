@@ -47,7 +47,6 @@ export default function TopStrip({ config, state, levelNum, restarts, roundIndex
           fontSize: '0.9rem', color: '#FFD700', fontWeight: 'bold', textShadow: '1px 1px 2px #000',
           zIndex: 10
         }}>
-          ❓ Rules
         </div>
       )}
     </div>

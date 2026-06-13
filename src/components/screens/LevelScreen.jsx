@@ -56,11 +56,11 @@ export default function LevelScreen({ levelNum, onHub }) {
 
   // 2. Safely grab the config from the CURRENT state (which merges the round config)
   const currentConfig = state?.config || levelData?.config;
-
-  // 3. Trigger the modal when the level loads, with DEBUG LOGS
+  
+// 3. Trigger the modal when the level loads OR when it is restarted
   useEffect(() => {
-    if (currentConfig?.requiresPlayerSelection && roundIndex === 0 && restarts === 0) {
-      console.log('✅ Showing Mode Select Modal!');
+    // We removed "&& restarts === 0" so it pops up every time they restart Round 1
+    if (currentConfig?.requiresPlayerSelection && roundIndex === 0) {
       setShowModeSelect(true);
     }
   }, [currentConfig, roundIndex, restarts]);

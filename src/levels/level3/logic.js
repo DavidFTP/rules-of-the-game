@@ -36,17 +36,16 @@ export const rounds = [
 export const onBeforeBoxPush = (state, box, playerNum, dx, dy) => {
   if (!box.isHeavy) return { allowed: true };
 
-  // If the user selected 1-Player mode (coop disabled), allow solo pushing
-  if (!state.config.coop) return { allowed: true };
+  // (We deleted the solo bypass rule here!)
 
-  // 2-Player Mode: Check if the OTHER player is on the EXACT SAME TILE
+  // Check if the OTHER player is on the EXACT SAME TILE
   const otherPlayer = playerNum === 1 ? state.player2Pos : state.playerPos;
   
   const isOtherPlayerHelping = 
     otherPlayer &&
     otherPlayer.r === box.r - dy && 
     otherPlayer.c === box.c - dx;
-    
+
   // Reject the push if they are trying to do it alone
   if (!isOtherPlayerHelping) {
     return { 
