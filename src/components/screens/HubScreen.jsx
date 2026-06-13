@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import HubCanvas   from '../canvas/HubCanvas.jsx'
 import TopStrip    from '../layout/TopStrip.jsx'
 import BottomStrip from '../layout/BottomStrip.jsx'
@@ -8,7 +8,7 @@ import { useHubPlayer } from '../../hooks/useHubPlayer.js'
 import { useSwipe }     from '../../hooks/useSwipe.js'
 import { useTouchDevice } from '../../hooks/useTouchDevice.js'
 import styles from './HubScreen.module.css'
-import { useRef } from 'react'
+import { loadAssets } from '../../config/spriteConfig.js'
 
 /**
  * HubScreen — the full hub page.
@@ -23,6 +23,15 @@ export default function HubScreen({ onEnterLevel }) {
   const [pendingDoor, setPendingDoor] = useState(null)
   const canvasAreaRef = useRef(null)
   const isTouch       = useTouchDevice()
+  const [images, setImages] = useState(null)
+
+  useEffect(() => {
+    let mounted = true
+    loadAssets()
+      .then(imgs => { if (mounted) setImages(imgs) })
+      .catch(() => {})
+    return () => { mounted = false }
+  }, [])
 
   const { playerRef, movePlayer, nearestDoor } = useHubPlayer(
     (door) => setPendingDoor(door)
@@ -36,7 +45,13 @@ export default function HubScreen({ onEnterLevel }) {
       <TopStrip config={null} state={null} />
 
       <div className={styles.canvasArea} ref={canvasAreaRef}>
-        <HubCanvas playerRef={playerRef} nearestDoor={nearestDoor} />
+        {images === null ? (
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+            Loading assets...
+          </div>
+        ) : (
+          <HubCanvas playerRef={playerRef} nearestDoor={nearestDoor} images={images} />
+        )}
 
         {pendingDoor && (
           <RiddleModal

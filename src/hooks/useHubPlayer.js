@@ -19,12 +19,12 @@ const MOVE_DIRS = {
  * Both keyboard and touch input call movePlayer() — same function, one source of truth.
  *
  * Returns:
- *   playerRef      — mutable ref { r, c } — read every frame to draw the character
+ *   playerRef      — mutable ref { r, c, dir } — read every frame to draw the character
  *   movePlayer(key) — ArrowUp/Down/Left/Right moves, 'Enter' triggers door entry
  *   nearestDoor()  — returns the nearest door if within 2 tiles, else null
  */
 export function useHubPlayer(onEnterDoor) {
-  const playerRef = useRef({ ...hubPlayerStart })
+  const playerRef = useRef({ ...hubPlayerStart, dir: 'down' })
 
   const nearestDoor = useCallback(() => {
     const p = playerRef.current
@@ -44,12 +44,13 @@ export function useHubPlayer(onEnterDoor) {
     }
     const mv = MOVE_DIRS[key]
     if (!mv) return
+    const dirMap = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }
     const p  = playerRef.current
     const nr = p.r + mv.dr
     const nc = p.c + mv.dc
     if (nr < 0 || nc < 0 || nr >= GRID.length || nc >= GRID[0].length) return
     if (GRID[nr][nc] === '#') return
-    playerRef.current = { r: nr, c: nc }
+    playerRef.current = { r: nr, c: nc, dir: dirMap[key] ?? p.dir }
   }, [nearestDoor, onEnterDoor])
 
   // Keyboard wiring belongs in a hook, never in a component

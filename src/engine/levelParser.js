@@ -54,11 +54,11 @@ export function parseMap(mapLines, overrides = {}) {
           break
         case 'P':
           row.push(T.FLOOR)
-          playerPos = { r, c }
+          playerPos = { r, c, dir: 'down' }
           break
         case '2':
           row.push(T.FLOOR)
-          player2Pos = { r, c }
+          player2Pos = { r, c, dir: 'down' }
           break
         case 'C':
           row.push(T.CRACK)

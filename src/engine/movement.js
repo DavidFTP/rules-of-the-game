@@ -81,9 +81,11 @@ export function moveEntity(state, key, playerKey = 'playerPos') {
       return { ...b, r: br2, c: bc2, onTarget: isTarget(targets, br2, bc2) }
     })
 
+    const dirMap = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }
+    const newDir = dirMap[key] ?? pos.dir ?? 'down'
     return {
       ...state,
-      [playerKey]: { r: nr, c: nc },
+      [playerKey]: { r: nr, c: nc, dir: newDir },
       boxes: newBoxes,
       placedOrder: newPlacedOrder, // Inject the updated timeline here
       moves: state.moves + 1,
@@ -106,9 +108,11 @@ export function moveEntity(state, key, playerKey = 'playerPos') {
     const newSpecials = specials.map((s, i) =>
       i === swIdx ? { ...s, active: true } : s
     )
+    const dirMap = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }
+    const newDir = dirMap[key] ?? pos.dir ?? 'down'
     let nextState = {
       ...state,
-      [playerKey]: { r: nr, c: nc },
+      [playerKey]: { r: nr, c: nc, dir: newDir },
       specials: newSpecials,
       fogLifted: true, 
       moves: state.moves + 1,
@@ -122,9 +126,11 @@ export function moveEntity(state, key, playerKey = 'playerPos') {
   const coinIdx = findSpecialAt(specials, nr, nc)
   if (coinIdx !== -1 && specials[coinIdx].type === 'coin') {
     const newSpecials = specials.filter((_, i) => i !== coinIdx)
+    const dirMap = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }
+    const newDir = dirMap[key] ?? pos.dir ?? 'down'
     return {
       ...state,
-      [playerKey]: { r: nr, c: nc },
+      [playerKey]: { r: nr, c: nc, dir: newDir },
       specials: newSpecials,
       tokens: state.tokens + (specials[coinIdx].amount ?? 10),
       moves: state.moves + 1,
@@ -133,9 +139,11 @@ export function moveEntity(state, key, playerKey = 'playerPos') {
   }
 
   // Plain move
+  const dirMap = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }
+  const newDir = dirMap[key] ?? pos.dir ?? 'down'
   return {
     ...state,
-    [playerKey]: { r: nr, c: nc },
+    [playerKey]: { r: nr, c: nc, dir: newDir },
     moves: state.moves + 1,
     _bump: false,
     _crackLose: false,

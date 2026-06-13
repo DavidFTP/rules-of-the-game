@@ -3,89 +3,101 @@
 // The sheet is 1110×1110px with a 10×10 grid = 111px per tile.
 // Coordinates are [col, row] (0-based).
 
-export const SPRITE_SHEET = 'sokoban_spritesheet_2.png'
-export const TILE_W = 111
-export const TILE_H = 111
-export const SHEET_COLS = 10
-export const SHEET_ROWS = 10
-
-// Named tile → [col, row] in the sheet
-export const TILES = {
-  // Floors / walls
-  floor:          [7, 0],
-  wall:           [5, 0],
-  wallRed:        [5, 1],
-  crackFloor:     [2, 2],
-  switchOff:      [7, 4],
-  switchOn:       [7, 3],
-
-  // Targets (diamond gems)
-  targetGreen:    [7, 9],
-  targetBlue:     [7, 8],
-  targetRed:      [7, 7],
-  targetGold:     [7, 6],
-
-  // Boxes — normal
-  boxGreen:       [0, 0],
-  boxBlue:        [0, 1],
-  boxRed:         [0, 2],
-  boxGrey:        [0, 4],
-  boxBrown:       [0, 3],
-  boxGold:        [1, 3],
-  boxSilver:      [1, 4],
-
-  // Boxes — on target (lit up)
-  boxGreenOn:     [1, 0],
-  boxBlueOn:      [1, 1],
-  boxRedOn:       [1, 2],
-
-  // Collectibles
-  coin:           [8, 3],
-
-  // Player 1 (red hat) — [col, row] pairs for each facing direction
-  p1Down:         [8, 0],
-  p1Up:           [8, 2],
-  p1Left:         [8, 4],
-  p1Right:        [8, 6],
-  // walk frames
-  p1DownWalk:     [9, 0],
-  p1UpWalk:       [9, 2],
-  p1LeftWalk:     [9, 4],
-  p1RightWalk:    [9, 6],
-
-  // Player 2 (green hat)
-  p2Down:         [8, 1],
-  p2Up:           [8, 3],
-  p2Left:         [8, 5],
-  p2Right:        [8, 7],
-  p2DownWalk:     [9, 1],
-  p2UpWalk:       [9, 3],
-  p2LeftWalk:     [9, 5],
-  p2RightWalk:    [9, 7],
+// Asset-first configuration
+export const ASSET_MODE = {
+  ASSETS: 'assets',
+  SHEET:  'sheet',
+  NONE:   'none',
 }
 
-// Maps a box's type string to the correct sprite tile name
-export function boxTile(type, onTarget = false) {
-  if (onTarget) {
-    const map = { green: 'boxGreenOn', blue: 'boxBlueOn', red: 'boxRedOn' }
-    return map[type] ?? 'boxGreenOn'
+export const DEFAULT_ASSET_MODE = ASSET_MODE.ASSETS
+
+// Map of helpful asset URLs (uses Vite-friendly new URL resolution)
+export const ASSET_PATHS = {
+  tiles: {
+    floor: new URL('../assets/tiles/greyG.png', import.meta.url).href,
+    wall:  new URL('../assets/tiles/redW2.png', import.meta.url).href,
+    targetGround: new URL('../assets/tiles/greyGtarget.png', import.meta.url).href,
+  },
+  boxes: {
+    default: new URL('../assets/crates/default.png', import.meta.url).href,
+    blue:    new URL('../assets/crates/blue.png', import.meta.url).href,
+    red:     new URL('../assets/crates/red.png', import.meta.url).href,
+    grey:    new URL('../assets/crates/grey.png', import.meta.url).href,
+    target:  new URL('../assets/crates/target.png', import.meta.url).href,
+  },
+  currency: {
+    coin: new URL('../assets/currency/lightcoin.png', import.meta.url).href,
+  },
+  sprites: {
+    front1:  new URL('../assets/sprites/front1.png', import.meta.url).href,
+    front2:  new URL('../assets/sprites/front2.png', import.meta.url).href,
+    frontStill: new URL('../assets/sprites/frontStill.png', import.meta.url).href,
+    back1:   new URL('../assets/sprites/back1.png', import.meta.url).href,
+    back2:   new URL('../assets/sprites/back2.png', import.meta.url).href,
+    backStill:  new URL('../assets/sprites/backStill.png', import.meta.url).href,
+    left1:   new URL('../assets/sprites/left1.png', import.meta.url).href,
+    left2:   new URL('../assets/sprites/left2.png', import.meta.url).href,
+    leftStill:  new URL('../assets/sprites/leftStill.png', import.meta.url).href,
+    right1:  new URL('../assets/sprites/right1.png', import.meta.url).href,
+    right2:  new URL('../assets/sprites/right2.png', import.meta.url).href,
+    rightStill: new URL('../assets/sprites/rightStill.png', import.meta.url).href,
   }
-  const map = {
-    green:  'boxGreen',
-    blue:   'boxBlue',
-    red:    'boxRed',
-    grey:   'boxGrey',
-    brown:  'boxBrown',
-    gold:   'boxGold',
-    silver: 'boxSilver',
-  }
-  return map[type] ?? 'boxGreen'
 }
 
-// Maps direction + player number to the correct sprite tile name
-export function playerTile(dir, playerNum = 1, walking = false) {
-  const prefix = playerNum === 2 ? 'p2' : 'p1'
-  const suffix = walking ? 'Walk' : ''
-  const d = dir.charAt(0).toUpperCase() + dir.slice(1)
-  return `${prefix}${d}${suffix}`
+// Preload images for quick usage in canvas rendering. Returns a Promise resolving
+// to a map { tiles: {...}, boxes: {...}, sprites: {...}, currency: {...} }
+export function loadAssets(onProgress = null) {
+  const all = []
+  const out = { tiles: {}, boxes: {}, sprites: {}, currency: {} }
+
+  const push = (category, key, url) => {
+    all.push({ category, key, url })
+  }
+
+  Object.entries(ASSET_PATHS.tiles).forEach(([k, v]) => push('tiles', k, v))
+  Object.entries(ASSET_PATHS.boxes).forEach(([k, v]) => push('boxes', k, v))
+  Object.entries(ASSET_PATHS.sprites).forEach(([k, v]) => push('sprites', k, v))
+  Object.entries(ASSET_PATHS.currency).forEach(([k, v]) => push('currency', k, v))
+
+  let loaded = 0
+  return Promise.all(all.map(item => new Promise(res => {
+    const img = new Image()
+    img.onload = () => {
+      loaded++
+      out[item.category][item.key] = img
+      onProgress?.(loaded, all.length, item)
+      res()
+    }
+    img.onerror = () => {
+      loaded++
+      // Leave the slot undefined so caller can fallback
+      onProgress?.(loaded, all.length, item)
+      res()
+    }
+    img.src = item.url
+  }))).then(() => out)
+}
+
+// Helper: return a specific image (may be undefined if not loaded)
+export function getAsset(map, path) {
+  if (!map) return undefined
+  const parts = path.split('.')
+  let cur = map
+  for (const p of parts) {
+    cur = cur?.[p]
+    if (cur === undefined) return undefined
+  }
+  return cur
+}
+
+// Map player direction ('up', 'down', 'left', 'right') to sprite key ('backStill', 'frontStill', etc.)
+export function dirToSpriteKey(dir) {
+  const dirMap = {
+    up: 'backStill',
+    down: 'frontStill',
+    left: 'leftStill',
+    right: 'rightStill',
+  }
+  return dirMap[dir] ?? 'frontStill'
 }
