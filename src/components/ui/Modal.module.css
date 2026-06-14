@@ -22,7 +22,7 @@
 
 .title {
   font-family: var(--font-pixel);
-  font-size: 13px;
+  font-size: 22px;
   color: var(--gold);
   margin-bottom: 18px;
   line-height: 1.6;
@@ -30,7 +30,7 @@
 
 .body {
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 24px;
   line-height: 1.75;
   color: #bbc;
   margin-bottom: 20px;
@@ -39,17 +39,17 @@
 .error {
   color: #e94560;
   font-family: var(--font-pixel);
-  font-size: 9px;
+  font-size: 14px;
   min-height: 20px;
   margin-bottom: 10px;
 }
 
 .btn {
   display: inline-block;
-  padding: 10px 26px;
+  padding: 12px 32px;
   border-radius: var(--radius);
   font-family: var(--font-pixel);
-  font-size: 9px;
+  font-size: 14px;
   cursor: pointer;
   margin: 5px;
   transition: opacity 0.15s, transform 0.1s;

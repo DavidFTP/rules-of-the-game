@@ -64,14 +64,14 @@
 }
 
 .progressText {
-  font-size: 0.85rem;
+  font-size: 1.2rem;
   color: rgba(255, 255, 255, 0.7);
   margin-bottom: 1rem;
   font-family: monospace;
 }
 
 .message {
-  font-size: 0.95rem;
+  font-size: 1.3rem;
   color: rgba(255, 255, 255, 0.6);
   font-style: italic;
 }

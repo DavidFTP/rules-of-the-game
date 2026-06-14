@@ -1,11 +1,11 @@
 .strip {
-  height: var(--strip-h);
-  min-height: var(--strip-h);
+  height: var(--top-strip-h);
+  min-height: var(--top-strip-h);
   background: var(--strip-bg);
   display: flex;
   align-items: center;
-  padding: 0 12px;
-  gap: 10px;
+  padding: 0 16px;
+  gap: 12px;
   border-bottom: 2px solid var(--accent, #e94560);
   z-index: 10;
   flex-shrink: 0;
@@ -15,7 +15,8 @@
 
 .title {
   font-family: var(--font-pixel);
-  font-size: 8px;
+  font-size: 14px;
+  font-weight: 900;
   color: var(--gold);
   white-space: nowrap;
   flex-shrink: 0;
@@ -29,7 +30,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   flex-shrink: 0;
   min-width: fit-content;
 }
@@ -45,8 +46,8 @@
 
 .text {
   font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 800;
   color: #dde;
   white-space: nowrap;
   overflow: hidden;
@@ -56,7 +57,7 @@
 
 .meta {
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: 12px;
   color: rgba(255,255,255,0.4);
   white-space: nowrap;
   flex-shrink: 0;
@@ -68,12 +69,12 @@
 
 .langBtn {
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: 11px;
   color: #aaa;
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.15);
   border-radius: 4px;
-  padding: 3px 8px;
+  padding: 5px 12px;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
@@ -97,7 +98,7 @@
 .marqueeTrack {
   white-space: nowrap;
   animation: marquee 26s linear infinite;
-  font-size: 13px;
+  font-size: 22px;
   font-weight: 700;
   color: #ccd;
 }
@@ -105,9 +106,9 @@
 .clue {
   color: var(--gold);
   font-weight: 900;
-  font-size: 14px;
+  font-size: 22px;
   background: rgba(245,166,35,0.15);
-  padding: 2px 6px;
+  padding: 4px 10px;
   border-radius: 3px;
 }
 
@@ -119,10 +120,10 @@
 /* ── Council ── */
 .councilWrap {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
   height: 100%;
-  padding: 6px 0;
+  padding: 8px 0;
 }
 
 .council {
@@ -133,8 +134,8 @@
   justify-content: center;
   background: rgba(255,255,255,0.04);
   border-radius: 4px;
-  padding: 4px 10px;
-  font-size: 11px;
+  padding: 6px 12px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.4;
   border-inline-start: 3px solid;
@@ -153,20 +154,20 @@
 
 .councilLabel {
   font-family: var(--font-pixel);
-  font-size: 6px;
+  font-size: 12px;
   opacity: 0.55;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 }
 
 /* Round progress badge */
 .roundBadge {
   font-family: var(--font-pixel);
-  font-size: 6px;
+  font-size: 12px;
   color: #fff;
   background: rgba(255,255,255,0.12);
   border: 1px solid rgba(255,255,255,0.25);
   border-radius: 8px;
-  padding: 2px 8px;
+  padding: 4px 12px;
   white-space: nowrap;
   flex-shrink: 0;
 }

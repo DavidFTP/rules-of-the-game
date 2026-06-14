@@ -9,13 +9,14 @@
   --gold:        #f5a623;
   --green:       #4caf50;
   --blue:        #2196f3;
-  --strip-h:     64px;
+  --top-strip-h: 120px;
+  --bot-strip-h: 80px;
   --cell:        52px;
   --radius:      8px;
   --shadow:      0 4px 24px rgba(0,0,0,0.55);
   --font-pixel:  'Press Start 2P', monospace;
   --font-body:   'Nunito', sans-serif;
-  --font-arabic: 'Noto Naskh Arabic', serif;
+  --font-arabic: 'Noto Sans Arabic', sans-serif;
 }
 
 *, *::before, *::after {

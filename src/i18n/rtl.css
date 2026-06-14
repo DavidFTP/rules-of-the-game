@@ -33,3 +33,10 @@
   right: auto !important;
   left: 12px !important;
 }
+
+/* Arabic font overrides */
+html[dir="rtl"] {
+  --font-body: var(--font-arabic);
+  --font-pixel: var(--font-arabic);
+  font-weight: 700;
+}

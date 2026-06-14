@@ -170,7 +170,7 @@ function drawFrame(ctx, state, images, t) {
     
     ctx.globalAlpha = opacity;
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 14px sans-serif';
+    ctx.font = 'bold 20px sans-serif';
     ctx.textAlign = 'center';
     
     ctx.lineWidth = 3;
@@ -326,12 +326,12 @@ function drawBox(ctx, box, onTarget, images) {
   const col = BOX_COLORS[box.type] ?? BOX_COLORS.green
   const key = box.type in (images?.boxes || {}) ? box.type : 'default'
   const img = images?.boxes?.[key]
-  // Prefer the typed box image. If missing, fall back to the generic
-  // `boxes.target` gem only when appropriate (i.e., no typed image).
-  if (img instanceof HTMLImageElement) {
-    ctx.drawImage(img, x + 3, y + 3, CS - 6, CS - 6)
-  } else if (onTarget && images?.boxes?.target instanceof HTMLImageElement) {
+  // When on a target tile, show the green gem regardless of box type.
+  // Off target, show the type-specific box image.
+  if (onTarget && images?.boxes?.target instanceof HTMLImageElement) {
     ctx.drawImage(images.boxes.target, x + 3, y + 3, CS - 6, CS - 6)
+  } else if (img instanceof HTMLImageElement) {
+    ctx.drawImage(img, x + 3, y + 3, CS - 6, CS - 6)
   } else {
     ctx.fillStyle = onTarget ? '#30a050' : col.bg
     roundRect(ctx, x + 3, y + 3, CS - 6, CS - 6, 7)

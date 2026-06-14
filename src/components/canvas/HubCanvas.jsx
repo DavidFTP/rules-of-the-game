@@ -129,7 +129,7 @@ export default function HubCanvas({ playerRef, nearestDoor, images = null }) {
           ctx.fillStyle = 'rgba(0,0,0,0.75)'
           ctx.fillRect(dx-80, dy-18, 160, 22)
           ctx.fillStyle = '#f5a623'
-          ctx.font = 'bold 11px monospace'
+          ctx.font = 'bold 16px monospace'
           ctx.textAlign = 'center'
           ctx.fillText(t('hubCanvas.pressToEnter'), dx, dy)
         }

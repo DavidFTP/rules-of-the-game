@@ -186,36 +186,36 @@ export default function LevelScreen({ levelNum, onHub }) {
           </Modal>
         )}
 
+          <div className={styles.escButton}>
+            <button
+              className={styles.iconBtn}
+              onTouchStart={e => { e.preventDefault(); onHub() }}
+              onMouseDown={onHub}
+              aria-label={t('levelScreen.returnToHub')}
+            >
+              ⌂
+            </button>
+          </div>
+          <div className={styles.topRightButtons}>
+            <button
+              className={styles.iconBtn}
+              onTouchStart={e => { e.preventDefault(); handleUndo?.() }}
+              onMouseDown={handleUndo}
+              aria-label={t('levelScreen.undo')}
+            >
+              ↩
+            </button>
+            <button
+              className={styles.iconBtn}
+              onTouchStart={e => { e.preventDefault(); handleRestart() }}
+              onMouseDown={handleRestart}
+              aria-label={t('levelScreen.restart')}
+            >
+              ↺
+            </button>
+          </div>
         {isTouch && (
           <>
-            <div className={styles.escButton}>
-              <button
-                className={styles.iconBtn}
-                onTouchStart={e => { e.preventDefault(); onHub() }}
-                onMouseDown={onHub}
-                aria-label={t('levelScreen.returnToHub')}
-              >
-                ⌂
-              </button>
-            </div>
-            <div className={styles.topRightButtons}>
-              <button
-                className={styles.iconBtn}
-                onTouchStart={e => { e.preventDefault(); handleUndo?.() }}
-                onMouseDown={handleUndo}
-                aria-label={t('levelScreen.undo')}
-              >
-                ↩
-              </button>
-              <button
-                className={styles.iconBtn}
-                onTouchStart={e => { e.preventDefault(); handleRestart() }}
-                onMouseDown={handleRestart}
-                aria-label={t('levelScreen.restart')}
-              >
-                ↺
-              </button>
-            </div>
             {isCoop ? (
               <div className={styles.touchControlsCoop}>
                 <div className={styles.padSide}>

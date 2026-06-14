@@ -11,7 +11,8 @@
 
 .compact .label {
   font-family: var(--font-pixel);
-  font-size: 6px;
+  font-size: 10px;
+  font-weight: 700;
 }
 
 .compact .grid {
@@ -23,7 +24,8 @@
 
 .label {
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: 12px;
+  font-weight: 700;
   color: rgba(255,255,255,0.4);
 }
 
