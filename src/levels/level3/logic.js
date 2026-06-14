@@ -1,28 +1,59 @@
-// Level 3 — Co-op
-// Two players on one keyboard.
-// P1: Arrow Keys | P2: WASD
-// Some boxes are positioned so that coordinated pushes are faster,
-// but the level is still solvable solo (just harder).
+import { map1, map2, map3 } from './map.js';
 
-export const map = [
-  '##############',
-  '#............#',
-  '#..T....T....#',
-  '#............#',
-  '#............#',
-  '#..B....B....#',
-  '#............#',
-  '#..P....2....#',
-  '#............#',
-  '##############',
-]
-
-export const playerStart  = { r: 7, c: 3 }
-export const player2Start = { r: 7, c: 8 }
-
-export const config = {
+const commonConfig = {
+  theme: 3,
   topStripMode: 'narrative',
   bottomStripMode: 'tokens',
-  narrativeText: '👫 Two heads are better than one!  P1: Arrow Keys  |  P2: WASD',
-  coop: true,
-}
+  requiresPlayerSelection: true,
+  coop: true, // Ensures WASD is active for P2
+};
+
+export const rounds = [
+  {
+    map: map1,
+    config: {
+      ...commonConfig,
+      narrativeText: 'Round 1: A humble start. You can move this box easily.',
+    }
+  },
+  {
+    map: map2,
+    config: {
+      ...commonConfig,
+      narrativeText: 'Round 2: This box is too heavy for pride. Work together!',
+    }
+  },
+  {
+    map: map3,
+    config: {
+      ...commonConfig,
+      narrativeText: 'Round 3: Double the burden. Stay humble and coordinate!',
+    }
+  }
+];
+
+// Hook triggered right before a player pushes a box.
+export const onBeforeBoxPush = (state, box, playerNum, dx, dy) => {
+  if (!box.isHeavy) return { allowed: true };
+
+  // (We deleted the solo bypass rule here!)
+
+  // Check if the OTHER player is on the EXACT SAME TILE
+  const otherPlayer = playerNum === 1 ? state.player2Pos : state.playerPos;
+  
+  const isOtherPlayerHelping = 
+    otherPlayer &&
+    otherPlayer.r === box.r - dy && 
+    otherPlayer.c === box.c - dx;
+
+  // Reject the push if they are trying to do it alone
+  if (!isOtherPlayerHelping) {
+    return { 
+      allowed: false, 
+      errorText: '2 Players Required!', 
+      errorPos: { r: box.r, c: box.c } 
+    };
+  }
+
+  return { allowed: true };
+};

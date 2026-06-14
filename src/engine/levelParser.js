@@ -17,6 +17,7 @@ import { T } from './constants.js'
  *   ' '  floor (space also treated as floor)
  *   'G'  gate
  *   'D'  destructible wall (looks like a normal wall but can be destroyed by the player)
+ *   'E'  door
  *
  * overrides: { boxes, targets, playerStart, player2Start }
  * These let a level's logic.js replace the map-parsed values
@@ -40,24 +41,30 @@ export function parseMap(mapLines, overrides = {}) {
           break
         case 'T':
           row.push(T.TARGET)
-          targets.push({ r, c })
+          // Targets now carry a `type` so logic and rendering can match
+          // against box types. Default to 'green' (matches box default).
+          targets.push({ r, c, type: 'green' })
           break
         case 'B':
           row.push(T.FLOOR)
           boxes.push({ r, c, type: 'green', id: `box-${r}-${c}` })
           break
+        case 'H': 
+          row.push(T.FLOOR)
+          boxes.push({ r, c, type: 'red', id: `box-${r}-${c}`, isHeavy: true })
+          break
         case 'O':
           row.push(T.TARGET)
-          targets.push({ r, c })
+          targets.push({ r, c, type: 'green' })
           boxes.push({ r, c, type: 'green', id: `box-${r}-${c}`, onTarget: true })
           break
         case 'P':
           row.push(T.FLOOR)
-          playerPos = { r, c }
+          playerPos = { r, c, dir: 'down' }
           break
         case '2':
           row.push(T.FLOOR)
-          player2Pos = { r, c }
+          player2Pos = { r, c, dir: 'down' }
           break
         case 'C':
           row.push(T.CRACK)
@@ -78,6 +85,10 @@ export function parseMap(mapLines, overrides = {}) {
           row.push(T.WALL) // Make it solid like a normal wall
           specials.push({ r, c, type: 'destructible' }) // Flag it so we can break it!
           break
+        case 'E':
+          row.push(0); // 0 means walkable floor
+          specials.push({ r, c, type: 'door' });
+          break;
         default:
           row.push(T.FLOOR)
       }
@@ -85,12 +96,16 @@ export function parseMap(mapLines, overrides = {}) {
     grid.push(row)
   })
 
+  // Normalize override-provided boxes/targets so they always include a `type`.
+  const resolvedBoxes = (overrides.boxes ?? boxes).map(b => ({ ...b, type: b.type ?? 'green' }))
+  const resolvedTargets = (overrides.targets ?? targets).map(t => ({ ...t, type: t.type ?? 'green' }))
+
   return {
     grid,
     playerPos:   overrides.playerStart   ?? playerPos,
     player2Pos:  overrides.player2Start  ?? player2Pos,
-    boxes:       overrides.boxes         ?? boxes,
-    targets:     overrides.targets       ?? targets,
+    boxes:       resolvedBoxes,
+    targets:     resolvedTargets,
     specials,
     moves:       0,
     tokens:      0,

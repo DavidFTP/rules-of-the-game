@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { hubMap, hubDoors } from '../../levels/hub/hubData.js'
+import { dirToSpriteKey } from '../../config/spriteConfig.js'
 import styles from './HubCanvas.module.css'
 
 const CS         = 72
@@ -25,7 +26,7 @@ function getCameraOrigin(p) {
  * Runs its own RAF loop because the hub world animates (door glow pulses).
  * No logic. No input handling. No state.
  */
-export default function HubCanvas({ playerRef, nearestDoor }) {
+export default function HubCanvas({ playerRef, nearestDoor, images = null }) {
   const canvasRef = useRef(null)
   const rafRef    = useRef(null)
 
@@ -57,14 +58,18 @@ export default function HubCanvas({ playerRef, nearestDoor }) {
           const ch = GRID[gr][gc]
 
           if (ch === '#') {
-            ctx.fillStyle = '#2a1a0a'
-            ctx.fillRect(x, y, CS, CS)
-            const bh = Math.floor(CS / 3)
-            ctx.fillStyle = '#3d2810'
-            for (let bi = 0; bi < 3; bi++) {
-              const off = bi % 2 === 0 ? 0 : Math.floor(CS / 2)
-              ctx.fillRect(x+off+1,              y+bi*bh+1, Math.floor(CS/2)-3, bh-2)
-              ctx.fillRect(x+off+Math.floor(CS/2)+1, y+bi*bh+1, Math.floor(CS/2)-3, bh-2)
+            if (images?.tiles?.wall instanceof HTMLImageElement) {
+              ctx.drawImage(images.tiles.wall, x, y, CS, CS)
+            } else {
+              ctx.fillStyle = '#2a1a0a'
+              ctx.fillRect(x, y, CS, CS)
+              const bh = Math.floor(CS / 3)
+              ctx.fillStyle = '#3d2810'
+              for (let bi = 0; bi < 3; bi++) {
+                const off = bi % 2 === 0 ? 0 : Math.floor(CS / 2)
+                ctx.fillRect(x+off+1,              y+bi*bh+1, Math.floor(CS/2)-3, bh-2)
+                ctx.fillRect(x+off+Math.floor(CS/2)+1, y+bi*bh+1, Math.floor(CS/2)-3, bh-2)
+              }
             }
           } else if (isDoor(gr, gc)) {
             const door  = getDoor(gr, gc)
@@ -93,12 +98,16 @@ export default function HubCanvas({ playerRef, nearestDoor }) {
               ctx.fillText(String(door.id), x+CS/2, y+CS*0.38)
             }
           } else {
-            ctx.fillStyle = (gr+gc)%2===0 ? '#1e3a1e' : '#1a3218'
-            ctx.fillRect(x, y, CS, CS)
-            if ((gr+gc)%4===0) {
-              ctx.fillStyle = 'rgba(80,160,80,0.18)'
-              ctx.fillRect(x+CS*0.2, y+CS*0.6, 4, 8)
-              ctx.fillRect(x+CS*0.6, y+CS*0.5, 4, 10)
+            if (images?.tiles?.floor instanceof HTMLImageElement) {
+              ctx.drawImage(images.tiles.floor, x, y, CS, CS)
+            } else {
+              ctx.fillStyle = (gr+gc)%2===0 ? '#1e3a1e' : '#1a3218'
+              ctx.fillRect(x, y, CS, CS)
+              if ((gr+gc)%4===0) {
+                ctx.fillStyle = 'rgba(80,160,80,0.18)'
+                ctx.fillRect(x+CS*0.2, y+CS*0.6, 4, 8)
+                ctx.fillRect(x+CS*0.6, y+CS*0.5, 4, 10)
+              }
             }
           }
         }
@@ -107,7 +116,7 @@ export default function HubCanvas({ playerRef, nearestDoor }) {
       // Player
       const px = (p.c - camC) * CS
       const py = (p.r - camR) * CS
-      drawCharacter(ctx, px, py, CS)
+      drawCharacter(ctx, px, py, CS, images, p.dir ?? 'down')
 
       // "Tap E" prompt
       const near = nearestDoor?.()
@@ -128,7 +137,7 @@ export default function HubCanvas({ playerRef, nearestDoor }) {
     function loop() { draw(); rafRef.current = requestAnimationFrame(loop) }
     rafRef.current = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(rafRef.current)
-  }, [playerRef, nearestDoor])
+  }, [playerRef, nearestDoor, images])
 
   return (
     <div className={styles.wrap}>
@@ -137,7 +146,14 @@ export default function HubCanvas({ playerRef, nearestDoor }) {
   )
 }
 
-function drawCharacter(ctx, x, y, cs) {
+function drawCharacter(ctx, x, y, cs, images = null, playerDir = 'down') {
+  // Try sprite image first, using direction-based sprite key
+  const spriteKey = dirToSpriteKey(playerDir)
+  const img = images?.sprites?.[spriteKey]
+  if (img instanceof HTMLImageElement) {
+    ctx.drawImage(img, x+6, y+2, cs-12, cs-12)
+    return
+  }
   ctx.fillStyle = 'rgba(0,0,0,0.35)'
   ctx.beginPath()
   ctx.ellipse(x+cs/2, y+cs-6, cs*0.28, cs*0.1, 0, 0, Math.PI*2)

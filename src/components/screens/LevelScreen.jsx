@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import GameBoard   from '../canvas/GameBoard.jsx'
+import { useAssets } from '../../contexts/AssetContext.jsx'
 import TopStrip    from '../layout/TopStrip.jsx'
 import BottomStrip from '../layout/BottomStrip.jsx'
 import DPad        from '../ui/DPad.jsx'
@@ -24,14 +25,18 @@ export default function LevelScreen({ levelNum, onHub }) {
   const levelData     = LEVELS[levelNum]
   const canvasAreaRef = useRef(null)
   const isTouch       = useTouchDevice()
+  const { images } = useAssets()
 
   const [showLevelWin,   setShowLevelWin]   = useState(false)
   const [showRoundWin,   setShowRoundWin]   = useState(false)
   const [showTutorial,   setShowTutorial]   = useState(false) // <-- New State
   const [completedRound, setCompletedRound] = useState(null)
+  const [showModeSelect, setShowModeSelect] = useState(false);
+  const [coopMode, setCoopMode] = useState(true);
 
   const { bag, buy, purchases } = useTokens()
 
+  // 1. Get the game state hook
   const {
     state,
     restarts,
@@ -49,6 +54,31 @@ export default function LevelScreen({ levelNum, onHub }) {
     onEscapeRequest: onHub,
   })
 
+  // 2. Safely grab the config from the CURRENT state (which merges the round config)
+  const currentConfig = state?.config || levelData?.config;
+  
+// 3. Trigger the modal when the level loads OR when it is restarted
+  useEffect(() => {
+    // We removed "&& restarts === 0" so it pops up every time they restart Round 1
+    if (currentConfig?.requiresPlayerSelection && roundIndex === 0) {
+      setShowModeSelect(true);
+    }
+  }, [currentConfig, roundIndex, restarts]);
+
+  useEffect(() => {
+    if (state && !coopMode) {
+      if (state.config) state.config.coop = false; // Tell logic.js it's solo
+      state.player2Pos = null; // Delete Player 2 coordinates from the engine
+    }
+  }, [state, coopMode]);
+
+  // Create a safe copy of state for the GameBoard to ensure P2 is hidden visually
+  const displayState = state ? {
+    ...state,
+    player2Pos: coopMode ? state.player2Pos : null
+  } : null;
+  // ==========================================
+  
   const showCrack = !!state?._crackLose
 
   // Swipe anywhere on the canvas moves P1
@@ -65,7 +95,8 @@ export default function LevelScreen({ levelNum, onHub }) {
   }
 
   const config = levelData.config
-  const isCoop = !!config?.coop
+  // Change this line so it respects your coopMode state!
+  const isCoop = !!currentConfig?.coop && coopMode;
 
   return (
     <div className={styles.wrap}>
@@ -76,10 +107,83 @@ export default function LevelScreen({ levelNum, onHub }) {
         restarts={restarts}
         roundIndex={roundIndex}
         totalRounds={totalRounds}
+        onTutorialClick={() => setShowTutorial(true)} // 👈 ADD THIS
       />
 
       <div className={styles.canvasArea} ref={canvasAreaRef} style={{ position: 'relative' }}>
-        <GameBoard state={state} />
+        
+        {/* Pass displayState here instead of state */}
+        <GameBoard state={displayState} images={images} />
+        
+        {/* --- 1P / 2P SELECTION MODAL --- */}
+        {showModeSelect && (
+          <Modal title="Choose Game Mode" onClose={() => {}}>
+            <div style={{ textAlign: 'center', padding: '10px' }}>
+              <p style={{ fontSize: '1.2rem', marginBottom: '20px' }}>
+                How do you want to play this level?
+              </p>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                <button 
+                  onClick={() => { setCoopMode(false); setShowModeSelect(false); }}
+                  style={{ padding: '12px 20px', backgroundColor: '#4a90e2', color: 'white', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  👤 1 Player (Solo)
+                </button>
+                <button 
+                  onClick={() => { setCoopMode(true); setShowModeSelect(false); }}
+                  style={{ padding: '12px 20px', backgroundColor: '#28a745', color: 'white', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  👥 2 Players (Co-op)
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
+
+        {/* --- INCORRECT ORDER LOSE MODAL --- */}
+        {state?._showOrderLose && (
+          <Modal title="❌ Incorrect Order!" onClose={() => {}}>
+            <div style={{ textAlign: 'center', padding: '10px', lineHeight: '1.8' }}>
+              <p style={{ fontSize: '1.2rem', marginBottom: '15px', color: '#ffbbbb' }}>
+                {state.orderLoseMessage}
+              </p>
+              <button 
+                onClick={handleRestart}
+                style={{
+                  width: '100%', padding: '12px', marginTop: '20px',
+                  backgroundColor: '#e94560', color: 'white', border: 'none',
+                  borderRadius: '6px', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer'
+                }}
+              >
+                ↻ Restart Round
+              </button>
+            </div>
+          </Modal>
+        )}
+        
+        {/* --- SIMON SAYS LOSE MODAL --- */}
+        {state?._showSimonLose && (
+          <Modal title="❌ Disobeyed Instructions" onClose={() => {}}>
+            <div style={{ textAlign: 'center', padding: '10px', lineHeight: '1.8', direction: 'ltr' }}>
+              <p style={{ fontSize: '1.2rem', marginBottom: '15px' }}>
+                You solved the puzzle, but you did it <strong>your own way</strong> instead of following the instructions!
+              </p>
+              <p style={{ fontSize: '1.1rem', color: '#ffbbbb' }}>
+                Just like Naaman, we must learn to obey God's word exactly, even when it seems like meaningless extra steps.
+              </p>
+              <button 
+                onClick={handleRestart}
+                style={{
+                  width: '100%', padding: '12px', marginTop: '20px',
+                  backgroundColor: '#e94560', color: 'white', border: 'none',
+                  borderRadius: '6px', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer'
+                }}
+              >
+                ↻ Restart and Obey
+              </button>
+            </div>
+          </Modal>
+        )}
 
         {isTouch && (
           <>
@@ -141,54 +245,56 @@ export default function LevelScreen({ levelNum, onHub }) {
           </>
         )}
 
-        {/* --- TUTORIAL BUTTON --- */}
-        {config?.hasTutorialButton && (
-          <button 
-            onClick={() => setShowTutorial(true)}
-            style={{
-              position: 'absolute',
-              top: '10px',
-              right: '10px',
-              padding: '8px 16px',
-              backgroundColor: 'var(--theme-primary, #333)',
-              color: '#fff',
-              border: '2px solid rgba(255,255,255,0.3)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              zIndex: 10,
-              boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-            }}
-          >
-            ❓ Read Rules
-          </button>
-        )}
-
         {/* --- TUTORIAL MODAL --- */}
         {showTutorial && (
-          <Modal title="Level Rules" onClose={() => setShowTutorial(false)}>
-            <div style={{ textAlign: 'right', direction: 'rtl', padding: '10px', lineHeight: '1.8' }}>
+          <Modal onClose={() => setShowTutorial(false)}>
+            {/* Inner wrapper to strictly control size, border, and background */}
+            <div style={{ 
+              maxWidth: '420px',           // Makes the modal significantly smaller
+              margin: '0 auto',            // Centers it inside the parent modal box
+              border: '4px solid #FFD700', // Clear, thick golden border
+              borderRadius: '12px',        // Smooth rounded corners
+              backgroundColor: '#1a1a2e',  // Dark background so the text and border pop
+              padding: '24px',             
+              textAlign: 'center', 
+              direction: 'ltr', 
+              lineHeight: '1.5',
+              boxShadow: '0px 10px 30px rgba(0,0,0,0.8)' // Deep shadow
+            }}>
+              
+              <h2 style={{ margin: '0 0 15px 0', color: '#FFD700', fontSize: '1.4rem' }}>
+                Level Rules
+              </h2>
+
               {config.tutorialSegments?.map((seg, i) => (
-                <p key={i} style={{ margin: '0 0 10px 0', fontSize: '1.1rem', color: seg.includes('⚠️') ? 'red' : 'inherit' }}>
+                <p key={i} style={{ 
+                  margin: '0 0 10px 0', 
+                  fontSize: '1rem', // Smaller text to fit the new layout
+                  color: seg.includes('⚠️') ? '#ff6b6b' : '#e0e0e0', 
+                  fontWeight: seg.includes('⚠️') ? 'bold' : 'normal'
+                }}>
                   {seg}
                 </p>
               ))}
+              
               <button 
                 onClick={() => setShowTutorial(false)}
                 style={{
                   width: '100%',
                   padding: '12px',
-                  marginTop: '10px',
+                  marginTop: '15px',
                   backgroundColor: '#28a745',
                   color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '1.2rem',
+                  border: '2px solid #ffffff', // Clear border around the button too
+                  borderRadius: '8px',
+                  fontSize: '1.1rem',
                   fontWeight: 'bold',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  textTransform: 'uppercase'
                 }}
               >
-                I Understand the Secret!
+                I Understand!
               </button>
             </div>
           </Modal>

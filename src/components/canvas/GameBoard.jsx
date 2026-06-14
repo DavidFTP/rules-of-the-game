@@ -1,22 +1,27 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { T } from '../../engine/constants.js'
+import { loadAssets, ASSET_MODE, DEFAULT_ASSET_MODE, dirToSpriteKey } from '../../config/spriteConfig.js'
 import { getVisibleCells } from '../../engine/fogOfWar.js'
 import styles from './GameBoard.module.css'
 
 const CS = 68  // cell size in pixels
 
-export default function GameBoard({ state }) {
+export default function GameBoard({ state, images: imagesProp = null }) {
   const canvasRef    = useRef(null)
   const containerRef = useRef(null)
+  const imagesRef    = useRef(null)
+  const [assetMode, setAssetMode] = useState(() => {
+    try { return state?.config?.assetMode ?? DEFAULT_ASSET_MODE } catch (e) { return DEFAULT_ASSET_MODE }
+  })
 
   useEffect(() => {
     if (!state || !canvasRef.current) return
     const canvas = canvasRef.current
     const ctx    = canvas.getContext('2d')
-    drawFrame(ctx, state)
-  }, [state])
+    const images = imagesProp ?? imagesRef.current
+    drawFrame(ctx, state, images)
+  }, [state, imagesProp])
 
-  // Scale canvas to fit container whenever state changes (grid size may vary)
   useEffect(() => {
     if (!state || !canvasRef.current || !containerRef.current) return
     const canvas    = canvasRef.current
@@ -30,6 +35,18 @@ export default function GameBoard({ state }) {
     canvas.style.top  = `${(ch - canvas.height * scale) / 2}px`
     canvas.style.left = `${(cw - canvas.width  * scale) / 2}px`
   }, [state])
+
+  useEffect(() => {
+    let mounted = true
+    if (imagesProp) return () => { mounted = false }
+    imagesRef.current = null
+    if (assetMode === ASSET_MODE.ASSETS) {
+      loadAssets(() => {})
+        .then(images => { if (mounted) imagesRef.current = images })
+        .catch(() => { imagesRef.current = null })
+    }
+    return () => { mounted = false }
+  }, [assetMode, imagesProp])
 
   if (!state) return null
 
@@ -50,7 +67,9 @@ export default function GameBoard({ state }) {
 
 // ── Drawing ──────────────────────────────────────────────────────────────────
 
-function drawFrame(ctx, state) {
+
+
+function drawFrame(ctx, state, images) {
   const { grid, boxes, targets, specials, playerPos, player2Pos, config } = state
   const rows = grid.length
   const cols  = grid[0]?.length ?? 0
@@ -58,56 +77,111 @@ function drawFrame(ctx, state) {
   ctx.clearRect(0, 0, cols * CS, rows * CS)
 
   const fogOn  = config?.fogOfWar && !state.fogLifted
+  
+  // Safe fog check that will not crash on the first render
   const visible = fogOn
-    ? getVisibleCells(playerPos, config.fogRadius ?? 2.5, rows, cols)
+    ? (playerPos ? getVisibleCells(playerPos, config.fogRadius ?? 2.5, rows, cols) : new Set())
     : null
 
-  // Tiles
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const inFog = visible && !visible.has(`${r},${c}`)
-      drawCell(ctx, grid[r][c], r, c, inFog, specials)
+      drawCell(ctx, grid[r][c], r, c, inFog, specials, images)
     }
   }
 
-  // Targets
   targets.forEach(t => {
     const inFog = visible && !visible.has(`${t.r},${t.c}`)
-    if (!inFog) drawTarget(ctx, t)
+    if (!inFog) drawTarget(ctx, t, images)
   })
 
-  // Boxes
   boxes.forEach(b => {
     const inFog = visible && !visible.has(`${b.r},${b.c}`)
-    if (!inFog) {
+      if (!inFog) {
       const onTarget = targets.some(t => t.r === b.r && t.c === b.c)
-      drawBox(ctx, b, onTarget)
+      drawBox(ctx, b, onTarget, images)
     }
   })
 
-  // Players
+  let p1Offset = 0;
+  let p2Offset = 0;
+
+  if (playerPos && player2Pos && playerPos.r === player2Pos.r && playerPos.c === player2Pos.c) {
+    p1Offset = -10;
+    p2Offset = 10;
+  }
+
   if (playerPos) {
     const inFog = visible && !visible.has(`${playerPos.r},${playerPos.c}`)
-    if (!inFog) drawPlayer(ctx, playerPos, 1)
+    if (!inFog) drawPlayer(ctx, playerPos, 1, images, p1Offset)
   }
   if (player2Pos) {
     const inFog = visible && !visible.has(`${player2Pos.r},${player2Pos.c}`)
-    if (!inFog) drawPlayer(ctx, player2Pos, 2)
+    if (!inFog) drawPlayer(ctx, player2Pos, 2, images, p2Offset)
   }
 
-  // Fog overlay on top of everything
-  if (fogOn) drawFogOverlay(ctx, playerPos, rows, cols, config.fogRadius ?? 2.5)
+  // Fog overlay on top of everything (inlined to avoid function lookup issues)
+  if (fogOn) {
+    const offscreen = document.createElement('canvas')
+    offscreen.width  = cols * CS
+    offscreen.height = rows * CS
+    const oc = offscreen.getContext('2d')
 
-  // Coins
-  specials.forEach(s => {
+    oc.fillStyle = 'rgba(0,0,0,0.97)'
+    oc.fillRect(0, 0, offscreen.width, offscreen.height)
+
+    if (playerPos) {
+      const cx = playerPos.c * CS + CS / 2
+      const cy = playerPos.r * CS + CS / 2
+      const r  = (config.fogRadius ?? 2.5) * CS
+      const grad = oc.createRadialGradient(cx, cy, 0, cx, cy, r)
+      grad.addColorStop(0,    'rgba(0,0,0,1)')
+      grad.addColorStop(0.65, 'rgba(0,0,0,1)')
+      grad.addColorStop(1,    'rgba(0,0,0,0)')
+      oc.globalCompositeOperation = 'destination-out'
+      oc.fillStyle = grad
+      oc.beginPath()
+      oc.arc(cx, cy, r, 0, Math.PI * 2)
+      oc.fill()
+    }
+
+    ctx.drawImage(offscreen, 0, 0)
+  }
+
+  ;(specials || []).forEach(s => {
     const inFog = visible && !visible.has(`${s.r},${s.c}`);
-    if (!inFog && s.type === 'coin') {
-      drawCoin(ctx, s.c * CS, s.r * CS);
+    if (!inFog && s.type === 'door') {
+      drawDoor(ctx, s.c * CS, s.r * CS, images);
     }
   });
+
+  ;(specials || []).forEach(s => {
+    const inFog = visible && !visible.has(`${s.r},${s.c}`);
+    if (!inFog && s.type === 'coin') {
+      drawCoin(ctx, s.c * CS, s.r * CS, images);
+    }
+  });
+
+  if (state._boxError) {
+    const { text, r, c, opacity = 1 } = state._boxError;
+    const x = c * CS + (CS / 2);
+    const y = r * CS - 10; 
+    
+    ctx.globalAlpha = opacity;
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'red';
+    ctx.strokeText(text, x, y);
+    ctx.fillText(text, x, y);
+    
+    ctx.globalAlpha = 1.0;
+  }
 }
 
-function drawCell(ctx, type, r, c, inFog, specials) {
+function drawCell(ctx, type, r, c, inFog, specials, images) {
   const x = c * CS, y = r * CS
   if (inFog) {
     ctx.fillStyle = '#000'
@@ -119,19 +193,22 @@ function drawCell(ctx, type, r, c, inFog, specials) {
     if (isGate) {
       drawGate(ctx, x, y)
     } else {
-    const isDestructible = specials?.some(s => s.type === 'destructible' && s.r === r && s.c === c);
-    
-    drawWall(ctx, x, y); // Draw the base wall first
-    
-    if (isDestructible) {
-      // Draw red cracks over it so they know they can break it!
-      ctx.strokeStyle = 'rgba(255, 80, 80, 0.9)';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(x + 10, y + 10); ctx.lineTo(x + CS - 10, y + CS - 10);
-      ctx.moveTo(x + CS - 10, y + 10); ctx.lineTo(x + 10, y + CS - 10);
-      ctx.stroke();
-    }
+      const isDestructible = specials?.some(s => s.type === 'destructible' && s.r === r && s.c === c);
+
+      if (images?.tiles?.wall instanceof HTMLImageElement) {
+        ctx.drawImage(images.tiles.wall, x, y, CS, CS)
+      } else {
+        drawWall(ctx, x, y); 
+      }
+
+      if (isDestructible) {
+        ctx.strokeStyle = 'rgba(255, 80, 80, 0.9)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x + 10, y + 10); ctx.lineTo(x + CS - 10, y + CS - 10);
+        ctx.moveTo(x + CS - 10, y + 10); ctx.lineTo(x + 10, y + CS - 10);
+        ctx.stroke();
+      }
     }
   } else if (type === T.CRACK) {
     drawCrack(ctx, x, y)
@@ -139,8 +216,12 @@ function drawCell(ctx, type, r, c, inFog, specials) {
     const sw = specials?.find(s => s.type === 'switch' && s.r === r && s.c === c)
     drawSwitch(ctx, x, y, sw?.active)
   } else {
-    ctx.fillStyle = (r + c) % 2 === 0 ? '#1c2a3a' : '#18223a'
-    ctx.fillRect(x, y, CS, CS)
+    if (images?.tiles?.floor instanceof HTMLImageElement) {
+      ctx.drawImage(images.tiles.floor, x, y, CS, CS)
+    } else {
+      ctx.fillStyle = (r + c) % 2 === 0 ? '#1c2a3a' : '#18223a'
+      ctx.fillRect(x, y, CS, CS)
+    }
   }
 }
 
@@ -182,15 +263,27 @@ function drawSwitch(ctx, x, y, active) {
   ctx.fillText(active ? 'ON' : 'SW', x + CS / 2, y + CS / 2 + 5)
 }
 
-function drawTarget(ctx, targetObj) {
+function drawTarget(ctx, targetObj, images) {
   const { r, c, type } = targetObj;
   const x = c * CS, y = r * CS;
-  
-  // Look up the color based on the target type, default to green
   const boxData = type && BOX_COLORS[type] ? BOX_COLORS[type] : BOX_COLORS.green;
   
+  // DEBUG: Log what we have
+  if (r === 0 && c === 0) {
+    console.log('🎯 drawTarget called - images.tiles.targetGround:', images?.tiles?.targetGround, 'is HTMLImageElement?', images?.tiles?.targetGround instanceof HTMLImageElement)
+    console.log('   Full images.tiles:', images?.tiles)
+  }
+  
+  // Draw target ground tile if available
+  // Draw target ground tile if available. Do NOT draw the generic
+  // `boxes.target` gem here — that's a fallback for box rendering only.
+  if (images?.tiles?.targetGround instanceof HTMLImageElement) {
+    ctx.drawImage(images.tiles.targetGround, x, y, CS, CS)
+    return
+  }
+
   ctx.fillStyle = boxData.bg;
-  ctx.globalAlpha = 0.3; // Make the background semi-transparent
+  ctx.globalAlpha = 0.3; 
   ctx.fillRect(x + 4, y + 4, CS - 8, CS - 8);
   ctx.globalAlpha = 1.0; 
 
@@ -205,7 +298,6 @@ function drawTarget(ctx, targetObj) {
 }
 
 function drawGate(ctx, x, y) {
-  // Draw a metallic looking door
   ctx.fillStyle = '#445566';
   ctx.fillRect(x, y, CS, CS);
   ctx.fillStyle = '#223344';
@@ -228,36 +320,53 @@ const BOX_COLORS = {
   silver: { bg: '#708090', border: '#506070', mark: '#90b0c0' },
 }
 
-function drawBox(ctx, box, onTarget) {
+function drawBox(ctx, box, onTarget, images) {
   const x = box.c * CS, y = box.r * CS
   const col = BOX_COLORS[box.type] ?? BOX_COLORS.green
+  const key = box.type in (images?.boxes || {}) ? box.type : 'default'
+  const img = images?.boxes?.[key]
+  // Prefer the typed box image. If missing, fall back to the generic
+  // `boxes.target` gem only when appropriate (i.e., no typed image).
+  if (img instanceof HTMLImageElement) {
+    ctx.drawImage(img, x + 3, y + 3, CS - 6, CS - 6)
+  } else if (onTarget && images?.boxes?.target instanceof HTMLImageElement) {
+    ctx.drawImage(images.boxes.target, x + 3, y + 3, CS - 6, CS - 6)
+  } else {
+    ctx.fillStyle = onTarget ? '#30a050' : col.bg
+    roundRect(ctx, x + 3, y + 3, CS - 6, CS - 6, 7)
+    ctx.fill()
 
-  ctx.fillStyle = onTarget ? '#30a050' : col.bg
-  roundRect(ctx, x + 3, y + 3, CS - 6, CS - 6, 7)
-  ctx.fill()
+    ctx.strokeStyle = onTarget ? '#18703a' : col.border
+    ctx.lineWidth = 2
+    ctx.stroke()
 
-  ctx.strokeStyle = onTarget ? '#18703a' : col.border
-  ctx.lineWidth = 2
-  ctx.stroke()
+    ctx.strokeStyle = col.mark
+    ctx.lineWidth = 2.5
+    ctx.beginPath()
+    ctx.moveTo(x + 13, y + 13);     ctx.lineTo(x + CS - 13, y + CS - 13)
+    ctx.moveTo(x + CS - 13, y + 13); ctx.lineTo(x + 13,     y + CS - 13)
+    ctx.stroke()
 
-  ctx.strokeStyle = col.mark
-  ctx.lineWidth = 2.5
-  ctx.beginPath()
-  ctx.moveTo(x + 13, y + 13);     ctx.lineTo(x + CS - 13, y + CS - 13)
-  ctx.moveTo(x + CS - 13, y + 13); ctx.lineTo(x + 13,     y + CS - 13)
-  ctx.stroke()
-
-  if (box.value !== undefined) {
-    ctx.fillStyle = '#fff'
-    ctx.font = 'bold 9px monospace'
-    ctx.textAlign = 'center'
-    ctx.fillText(String(box.value), x + CS / 2, y + CS - 7)
+    if (box.value !== undefined) {
+      ctx.fillStyle = '#fff'
+      ctx.font = 'bold 9px monospace'
+      ctx.textAlign = 'center'
+      ctx.fillText(String(box.value), x + CS / 2, y + CS - 7)
+    }
   }
 }
 
-function drawPlayer(ctx, pos, playerNum) {
-  const x = pos.c * CS, y = pos.r * CS
+function drawPlayer(ctx, pos, playerNum, images, xOffset = 0) {
+  const x = pos.c * CS + xOffset, y = pos.r * CS
   const isP2 = playerNum === 2
+  const dir = pos.dir ?? 'down'
+  const spriteKey = dirToSpriteKey(dir)
+  const img = images?.sprites?.[spriteKey]
+  
+  if (img instanceof HTMLImageElement) {
+    ctx.drawImage(img, x + 6, y + 2, CS - 12, CS - 12)
+    return
+  }
 
   ctx.fillStyle = 'rgba(0,0,0,0.3)'
   ctx.beginPath()
@@ -287,32 +396,6 @@ function drawPlayer(ctx, pos, playerNum) {
   }
 }
 
-function drawFogOverlay(ctx, playerPos, rows, cols, radius) {
-  const offscreen = document.createElement('canvas')
-  offscreen.width  = cols * CS
-  offscreen.height = rows * CS
-  const oc = offscreen.getContext('2d')
-
-  oc.fillStyle = 'rgba(0,0,0,0.97)'
-  oc.fillRect(0, 0, offscreen.width, offscreen.height)
-
-  if (playerPos) {
-    const cx = playerPos.c * CS + CS / 2
-    const cy = playerPos.r * CS + CS / 2
-    const r  = radius * CS
-    const grad = oc.createRadialGradient(cx, cy, 0, cx, cy, r)
-    grad.addColorStop(0,    'rgba(0,0,0,1)')
-    grad.addColorStop(0.65, 'rgba(0,0,0,1)')
-    grad.addColorStop(1,    'rgba(0,0,0,0)')
-    oc.globalCompositeOperation = 'destination-out'
-    oc.fillStyle = grad
-    oc.beginPath()
-    oc.arc(cx, cy, r, 0, Math.PI * 2)
-    oc.fill()
-  }
-
-  ctx.drawImage(offscreen, 0, 0)
-}
 
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath()
@@ -324,12 +407,14 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath()
 }
 
-
-function drawCoin(ctx, x, y) {
+function drawCoin(ctx, x, y, images) {
   const cx = x + CS / 2;
   const cy = y + CS / 2;
-  
-  // Outer gold ring
+  if (images?.currency?.coin instanceof HTMLImageElement) {
+    ctx.drawImage(images.currency.coin, x + 8, y + 8, CS - 16, CS - 16)
+    return
+  }
+
   ctx.fillStyle = '#FFD700';
   ctx.beginPath();
   ctx.arc(cx, cy, 12, 0, Math.PI * 2);
@@ -338,10 +423,21 @@ function drawCoin(ctx, x, y) {
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  // Inner dollar sign
   ctx.fillStyle = '#B8860B';
   ctx.font = 'bold 16px monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('$', cx, cy + 1);
+}
+
+function drawDoor(ctx, x, y, images) {
+  ctx.fillStyle = '#111'; 
+  ctx.fillRect(x, y, CS, CS);
+  
+  ctx.strokeStyle = '#555';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(x, y, CS, CS);
+  
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+  ctx.fillRect(x + 4, y + 4, CS - 8, CS - 8);
 }

@@ -2,12 +2,19 @@ import React, { useState } from 'react'
 import PageShell   from './components/layout/PageShell.jsx'
 import HubScreen   from './components/screens/HubScreen.jsx'
 import LevelScreen from './components/screens/LevelScreen.jsx'
+import LoadingScreen from './components/screens/LoadingScreen.jsx'
+import { AssetProvider, useAssets } from './contexts/AssetContext.jsx'
 import { getTheme } from './config/themeConfig.js'
 import styles from './App.module.css'
 
-export default function App() {
+function AppContent() {
   const [scene, setScene] = useState('hub')
+  const { isLoading, progress, error } = useAssets()
   const theme = getTheme(scene === 'hub' ? 'hub' : scene.level)
+
+  if (isLoading || error) {
+    return <LoadingScreen progress={progress} error={error} />
+  }
 
   return (
     <PageShell>
@@ -25,5 +32,13 @@ export default function App() {
         }
       </div>
     </PageShell>
+  )
+}
+
+export default function App() {
+  return (
+    <AssetProvider>
+      <AppContent />
+    </AssetProvider>
   )
 }

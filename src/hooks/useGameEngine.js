@@ -23,27 +23,36 @@ function buildStateForRound(levelData, roundIndex = 0) {
 
   if (!mapLines) return null
 
-  // Round-level overrides beat level-root overrides
+  // 1. Let parseMap do its standard job WITHOUT the box override
   const parsed = parseMap(mapLines, {
-    boxes:        round?.boxes        ?? levelData.boxes,
     targets:      round?.targets      ?? levelData.targets,
     playerStart:  round?.playerStart  ?? levelData.playerStart,
     player2Start: round?.player2Start ?? levelData.player2Start,
   })
 
+  // 2. Safely apply the boxes function (if it exists) to the parsed boxes
+  const boxOverride = round?.boxes ?? levelData.boxes;
+  let finalBoxes = parsed.boxes;
+  if (typeof boxOverride === 'function') {
+    finalBoxes = boxOverride(parsed.boxes);
+  } else if (Array.isArray(boxOverride)) {
+    finalBoxes = boxOverride;
+  }
+
   return {
     ...parsed,
+    boxes:        finalBoxes, // 👈 Injects the properly formatted array!
     config:       { ...(levelData.config ?? {}), ...(round?.config ?? {}) },
     fogLifted:    !(levelData.config?.fogOfWar),
     placedOrder:  [],
     simonStep:    0,
+    _simonFailed: false,
     roundIndex,
     totalRounds:  isMulti ? levelData.rounds.length : 1,
     isFinalRound: isMulti ? roundIndex === levelData.rounds.length - 1 : true,
-    active_Powerups: [],
+    activePowerups: [],
   }
 }
-
 /**
  * useGameEngine(levelNum, { onRoundWin, onLevelWin })
  *
@@ -83,41 +92,70 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin, onEscapeReques
   }, [levelNum])
 
  // Win detection after every state change
-  useEffect(() => {
-    if (!state || wonRef.current || roundWonRef.current) return
-    if (!checkWin(state)) return
+useEffect(() => {
+    if (!state || wonRef.current || roundWonRef.current || state._showSimonLose || state._showZoneLose) return;
 
-    roundWonRef.current = true
-    
-    // 🚨 THIS IS THE FIX: Set the bag exactly to what the state has. 
-    // Do NOT use "prev => prev + earned", otherwise it doubles every round!
-    const currentTokens = state.tokens ?? 0;
-    setCarriedTokens(currentTokens);
-
-    if (state.isFinalRound) {
-      wonRef.current = true
-      onLevelWin?.()
-    } else {
-      onRoundWin?.(state.roundIndex)
+    // 🚪 Did they step into a door in Map 1?
+    if (state._triggeredDoor && state.roundIndex === 0) {
+      roundWonRef.current = true;
+      onRoundWin?.(state.roundIndex);
+      return;
     }
-  }, [state, onRoundWin, onLevelWin])
+
+    if (!checkWin(state)) return;
+
+    // --- ⚖️ FATAL TRAP CHECK (Triggers if they finish the puzzle) ---
+    if (state.config?.theme === 'level6' && state.roundIndex > 0) {
+      if (state.chosenPath === 'left') {
+        setState(s => ({ ...s, _showZoneLose: true, zoneLoseMessage: "You entered the West Door. It was the path of the world. Even though you solved the puzzle perfectly, you are trapped forever!" }));
+        return;
+      }
+      // If it's the right path, handleMove already checked the order. They win!
+    }
+
+    if (state.config?.topStripMode === 'simon' && state._simonFailed) {
+      setState(s => ({ ...s, _showSimonLose: true }));
+      return;
+    }
+
+    roundWonRef.current = true;
+    setCarriedTokens(state.tokens ?? 0);
+
+    const isActuallyFinal = state.isFinalRound || (state.config?.theme === 'level6' && state.roundIndex > 0);
+
+    if (isActuallyFinal) {
+      wonRef.current = true;
+      onLevelWin?.();
+    } else {
+      onRoundWin?.(state.roundIndex);
+    }
+  }, [state, onRoundWin, onLevelWin]);
+  
   /** Move to the next round. Call this from the UI after showing a between-round screen. */
   const advanceRound = useCallback(() => {
-    const nextIdx = roundIndex + 1
-    const ld = LEVELS[levelNum]
-    if (!ld?.rounds || nextIdx >= ld.rounds.length) return
-
-    roundWonRef.current = false
-    setRoundIndex(nextIdx)
-    setHistory([])
     setState(prev => {
-      const fresh = buildStateForRound(ld, nextIdx)
-      if (!fresh) return prev
-      // Carry tokens forward
-      return { ...fresh, tokens: carriedTokens }
-    })
-  }, [roundIndex, levelNum, carriedTokens])
+      let nextIdx = prev.roundIndex + 1;
+      const path = prev._triggeredDoor || prev.chosenPath;
+      
+      // 💡 TELEPORT TO THE RIGHT MAP based on the door they touched!
+      if (LEVELS[levelNum]?.config?.theme === 'level6' && prev.roundIndex === 0) {
+        nextIdx = path === 'right' ? 2 : 1;
+      }
 
+      const ld = LEVELS[levelNum];
+      if (!ld?.rounds || nextIdx >= ld.rounds.length) return prev;
+
+      roundWonRef.current = false;
+      setRoundIndex(nextIdx);
+      setHistory([]);
+
+      const fresh = buildStateForRound(ld, nextIdx);
+      if (!fresh) return prev;
+      
+      return { ...fresh, tokens: carriedTokens, chosenPath: path };
+    });
+  }, [levelNum, carriedTokens]);
+  
   const handleRestart = useCallback(() => {
     wonRef.current      = false
     roundWonRef.current = false
@@ -136,46 +174,92 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin, onEscapeReques
     })
   }, [])
 
-  const handleMove = useCallback((key, playerKey) => {
+const handleMove = useCallback((key, playerKey) => {
     if (wonRef.current || roundWonRef.current) return
 
     setState(current => {
       if (!current) return current
 
-      // Simon Says: wrong key resets progress without moving
+      setHistory(h => pushHistory(h, current))
+      
+      // Grab the custom push rules from the level's logic file
+      const pushHook = LEVELS[levelNum]?.logic?.onBeforeBoxPush || LEVELS[levelNum]?.onBeforeBoxPush;
+      
+      // Pass the hook into moveEntity
+      const next = moveEntity(current, key, playerKey, pushHook)
+
+      // Clear the "2 Players Required" error after 1.5 seconds
+      if (next._boxError && !current._boxError) {
+        setTimeout(() => {
+          setState(s => s ? { ...s, _boxError: null } : s);
+        }, 1500);
+      }
+
+      // --- 💡 SIMON SAYS: FREE WILL LOGIC ---
       const cfg = current.config
       if (cfg?.topStripMode === 'simon') {
         const seq  = cfg.simonSequence ?? []
         const step = current.simonStep ?? 0
-        if (step < seq.length && key !== seq[step]) {
-          return { ...current, simonStep: 0 }
+
+        if (!current._simonFailed) {
+          if (step < seq.length && key === seq[step]) {
+            next.simonStep = step + 1 
+          } else {
+            next._simonFailed = true  
+            next.simonStep = step     
+          }
+        } else {
+          next._simonFailed = true
+          next.simonStep = current.simonStep
         }
       }
 
-      setHistory(h => pushHistory(h, current))
-      const next = moveEntity(current, key, playerKey)
+      // --- 🚪 LEVEL 6 DOOR TRIGGERS ---
+      if (cfg?.theme === 'level6' && current.roundIndex === 0) {
+        const nr = next[playerKey].r;
+        const nc = next[playerKey].c;
 
-      // Advance Simon step
-      if (cfg?.topStripMode === 'simon') {
-        const seq  = cfg.simonSequence ?? []
-        const step = current.simonStep ?? 0
-        if (step < seq.length) return { ...next, simonStep: step + 1 }
+        // Safe check using (next.specials || []) to prevent crashes
+        const steppedOnDoor = (next.specials || []).some(s => s.type === 'door' && s.r === nr && s.c === nc);
+
+        if (steppedOnDoor) {
+          if (nc < 6) next._triggeredDoor = 'left';
+          else next._triggeredDoor = 'right';
+        }
       }
 
-      // Track box placement order (L1 grey-last, L6 council order)
+      // Track box placement order
       if (cfg?.enforceOrder) {
-        const justPlaced = next.boxes.filter(
-          (b, i) => b.onTarget && !current.boxes[i]?.onTarget
-        )
+        const justPlaced = (next.boxes || []).filter(
+          (b, i) => b.onTarget && !(current.boxes || [])[i]?.onTarget
+        );
         if (justPlaced.length > 0) {
-          return {
-            ...next,
-            placedOrder: [...(current.placedOrder ?? []), ...justPlaced.map(b => b.type)],
+          next.placedOrder = [...(current.placedOrder ?? []), ...justPlaced.map(b => b.type)];
+          
+          // 🚨 INSTANT LOSE CHECK! Did they place a box out of order?
+          const reqOrder = current.requiredOrder || cfg.requiredOrder;
+          if (reqOrder) {
+            for (let i = 0; i < next.placedOrder.length; i++) {
+              if (next.placedOrder[i] !== reqOrder[i]) {
+                console.log(`Box placed out of order! Expected ${reqOrder[i]}, but got ${next.placedOrder[i]}.`);
+                next._showOrderLose = true;
+                next.orderLoseMessage = "Follow the rules! Box is not in the correct order!";
+                break; // Stop checking, they already failed
+              }
+            }
+          }
+
+          // (Keep any Level 6 specific logic you had here as well)
+          if (cfg.theme === 'level6' && next.roundIndex > 0 && next.chosenPath === 'right') {
+            const placed = next.placedOrder;
+            if (placed.length === 1 && placed[0] !== 'blue') {
+              next._showZoneLose = true;
+              next.zoneLoseMessage = "You chose the True Path, but disobeyed the order! (You must place Blue first, then Red).";
+            }
           }
         }
       }
-
-      return next
+      return next;
     })
   }, [])
 
