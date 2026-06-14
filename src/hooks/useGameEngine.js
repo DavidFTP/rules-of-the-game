@@ -73,12 +73,15 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin, onEscapeReques
   const [roundIndex, setRoundIndex] = useState(0)
   const [state,      setState]      = useState(() => buildStateForRound(levelData, 0))
   const [history,    setHistory]    = useState([])
+  const historyRef = useRef(history);
+  historyRef.current = history;
   const [restarts,   setRestarts]   = useState(0)
   // Tokens carry across rounds
   const [carriedTokens, setCarriedTokens] = useState(0)
 
   const wonRef      = useRef(false)
   const roundWonRef = useRef(false)
+  const moveGuardRef = useRef(false)
 
   // Reset everything when levelNum changes
   useEffect(() => {
@@ -167,20 +170,27 @@ useEffect(() => {
   }, [levelNum])
 
   const handleUndo = useCallback(() => {
-    setHistory(h => {
-      const { prev, history: next } = popHistory(h)
-      if (prev) setState(prev)
-      return next
-    })
+    const h = historyRef.current
+    if (h.length === 0) return
+    const next = [...h]
+    const prev = next.pop()
+    if (prev) {
+      setState(prev)
+      setHistory(next)
+    }
   }, [])
 
 const handleMove = useCallback((key, playerKey) => {
     if (wonRef.current || roundWonRef.current) return
+    moveGuardRef.current = false
 
     setState(current => {
       if (!current) return current
 
-      setHistory(h => pushHistory(h, current))
+      if (!moveGuardRef.current) {
+        setHistory(h => pushHistory(h, current))
+        moveGuardRef.current = true
+      }
       
       // Grab the custom push rules from the level's logic file
       const pushHook = LEVELS[levelNum]?.logic?.onBeforeBoxPush || LEVELS[levelNum]?.onBeforeBoxPush;
