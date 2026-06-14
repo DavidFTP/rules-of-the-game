@@ -107,7 +107,7 @@ useEffect(() => {
     // --- ⚖️ FATAL TRAP CHECK (Triggers if they finish the puzzle) ---
     if (state.config?.theme === 'level6' && state.roundIndex > 0) {
       if (state.chosenPath === 'left') {
-        setState(s => ({ ...s, _showZoneLose: true, zoneLoseMessage: "You entered the West Door. It was the path of the world. Even though you solved the puzzle perfectly, you are trapped forever!" }));
+        setState(s => ({ ...s, _showZoneLose: true, zoneLoseMessageKey: 'engine.trappedWestDoor' }));
         return;
       }
       // If it's the right path, handleMove already checked the order. They win!
@@ -243,18 +243,17 @@ const handleMove = useCallback((key, playerKey) => {
               if (next.placedOrder[i] !== reqOrder[i]) {
                 console.log(`Box placed out of order! Expected ${reqOrder[i]}, but got ${next.placedOrder[i]}.`);
                 next._showOrderLose = true;
-                next.orderLoseMessage = "Follow the rules! Box is not in the correct order!";
-                break; // Stop checking, they already failed
+                next.orderLoseMessageKey = 'engine.followRules';
+                break;
               }
             }
           }
 
-          // (Keep any Level 6 specific logic you had here as well)
           if (cfg.theme === 'level6' && next.roundIndex > 0 && next.chosenPath === 'right') {
             const placed = next.placedOrder;
             if (placed.length === 1 && placed[0] !== 'blue') {
               next._showZoneLose = true;
-              next.zoneLoseMessage = "You chose the True Path, but disobeyed the order! (You must place Blue first, then Red).";
+              next.zoneLoseMessageKey = 'engine.truePathDisobey';
             }
           }
         }

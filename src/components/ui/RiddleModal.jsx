@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Modal, { ModalTitle, ModalBody, ModalError, Btn } from './Modal.jsx'
-import { hubRiddles } from '../../levels/hub/hubData.js'
+import { useLanguage } from '../../i18n/LanguageContext.jsx'
 
 export default function RiddleModal({ door, onSuccess, onClose }) {
-  const riddle  = hubRiddles.find(r => r.id === door.id) ?? hubRiddles[0]
+  const { t, riddles } = useLanguage()
+  const riddle = riddles.find(r => r.id === door.id) ?? riddles[0]
   const [value, setValue]   = useState('')
   const [error, setError]   = useState('')
   const inputRef = useRef(null)
@@ -16,7 +17,7 @@ export default function RiddleModal({ door, onSuccess, onClose }) {
     if (value.trim().toLowerCase() === riddle.answer.toLowerCase()) {
       onSuccess(door.id)
     } else {
-      setError('✗ Not quite — ask your teacher for the hint!')
+      setError(t('riddle.notQuite'))
       setValue('')
       inputRef.current?.focus()
     }
@@ -24,9 +25,9 @@ export default function RiddleModal({ door, onSuccess, onClose }) {
 
   return (
     <Modal onClose={onClose}>
-      <ModalTitle>🚪 {door.label}</ModalTitle>
+      <ModalTitle>🚪 {t(door.labelKey, { n: door.id })}</ModalTitle>
       <ModalBody>
-        To enter, answer the riddle your teacher shared in class:
+        {t('riddle.enterPrompt')}
       </ModalBody>
       <p style={{ color: 'var(--gold)', fontStyle: 'italic', marginBottom: 20, fontSize: 14, lineHeight: 1.7 }}>
         "{riddle.question}"
@@ -37,7 +38,7 @@ export default function RiddleModal({ door, onSuccess, onClose }) {
         value={value}
         onChange={e => { setValue(e.target.value); setError('') }}
         onKeyDown={e => e.key === 'Enter' && submit()}
-        placeholder="Your answer..."
+        placeholder={t('riddle.yourAnswer')}
         style={{
           width: '100%',
           padding: '10px 14px',
@@ -53,8 +54,8 @@ export default function RiddleModal({ door, onSuccess, onClose }) {
         }}
       />
       <ModalError>{error}</ModalError>
-      <Btn variant="gold" onClick={submit}>Enter</Btn>
-      <Btn variant="secondary" onClick={onClose}>Go Back</Btn>
+      <Btn variant="gold" onClick={submit}>{t('riddle.enter')}</Btn>
+      <Btn variant="secondary" onClick={onClose}>{t('riddle.goBack')}</Btn>
     </Modal>
   )
 }

@@ -2,11 +2,13 @@ import React, { useEffect, useRef, useState } from 'react'
 import { T } from '../../engine/constants.js'
 import { loadAssets, ASSET_MODE, DEFAULT_ASSET_MODE, dirToSpriteKey } from '../../config/spriteConfig.js'
 import { getVisibleCells } from '../../engine/fogOfWar.js'
+import { useLanguage } from '../../i18n/LanguageContext.jsx'
 import styles from './GameBoard.module.css'
 
 const CS = 68  // cell size in pixels
 
 export default function GameBoard({ state, images: imagesProp = null }) {
+  const { t } = useLanguage()
   const canvasRef    = useRef(null)
   const containerRef = useRef(null)
   const imagesRef    = useRef(null)
@@ -19,8 +21,8 @@ export default function GameBoard({ state, images: imagesProp = null }) {
     const canvas = canvasRef.current
     const ctx    = canvas.getContext('2d')
     const images = imagesProp ?? imagesRef.current
-    drawFrame(ctx, state, images)
-  }, [state, imagesProp])
+    drawFrame(ctx, state, images, t)
+  }, [state, imagesProp, t])
 
   useEffect(() => {
     if (!state || !canvasRef.current || !containerRef.current) return
@@ -69,7 +71,7 @@ export default function GameBoard({ state, images: imagesProp = null }) {
 
 
 
-function drawFrame(ctx, state, images) {
+function drawFrame(ctx, state, images, t) {
   const { grid, boxes, targets, specials, playerPos, player2Pos, config } = state
   const rows = grid.length
   const cols  = grid[0]?.length ?? 0
@@ -78,7 +80,6 @@ function drawFrame(ctx, state, images) {
 
   const fogOn  = config?.fogOfWar && !state.fogLifted
   
-  // Safe fog check that will not crash on the first render
   const visible = fogOn
     ? (playerPos ? getVisibleCells(playerPos, config.fogRadius ?? 2.5, rows, cols) : new Set())
     : null
@@ -86,19 +87,19 @@ function drawFrame(ctx, state, images) {
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const inFog = visible && !visible.has(`${r},${c}`)
-      drawCell(ctx, grid[r][c], r, c, inFog, specials, images)
+      drawCell(ctx, grid[r][c], r, c, inFog, specials, images, t)
     }
   }
 
-  targets.forEach(t => {
-    const inFog = visible && !visible.has(`${t.r},${t.c}`)
-    if (!inFog) drawTarget(ctx, t, images)
+  targets.forEach(tg => {
+    const inFog = visible && !visible.has(`${tg.r},${tg.c}`)
+    if (!inFog) drawTarget(ctx, tg, images)
   })
 
   boxes.forEach(b => {
     const inFog = visible && !visible.has(`${b.r},${b.c}`)
       if (!inFog) {
-      const onTarget = targets.some(t => t.r === b.r && t.c === b.c)
+      const onTarget = targets.some(tg => tg.r === b.r && tg.c === b.c)
       drawBox(ctx, b, onTarget, images)
     }
   })
@@ -120,7 +121,6 @@ function drawFrame(ctx, state, images) {
     if (!inFog) drawPlayer(ctx, player2Pos, 2, images, p2Offset)
   }
 
-  // Fog overlay on top of everything (inlined to avoid function lookup issues)
   if (fogOn) {
     const offscreen = document.createElement('canvas')
     offscreen.width  = cols * CS
@@ -163,7 +163,8 @@ function drawFrame(ctx, state, images) {
   });
 
   if (state._boxError) {
-    const { text, r, c, opacity = 1 } = state._boxError;
+    const { text, textKey, r, c, opacity = 1 } = state._boxError;
+    const displayText = textKey ? t(textKey) : text;
     const x = c * CS + (CS / 2);
     const y = r * CS - 10; 
     
@@ -174,14 +175,14 @@ function drawFrame(ctx, state, images) {
     
     ctx.lineWidth = 3;
     ctx.strokeStyle = 'red';
-    ctx.strokeText(text, x, y);
-    ctx.fillText(text, x, y);
+    ctx.strokeText(displayText, x, y);
+    ctx.fillText(displayText, x, y);
     
     ctx.globalAlpha = 1.0;
   }
 }
 
-function drawCell(ctx, type, r, c, inFog, specials, images) {
+function drawCell(ctx, type, r, c, inFog, specials, images, t) {
   const x = c * CS, y = r * CS
   if (inFog) {
     ctx.fillStyle = '#000'
@@ -214,7 +215,7 @@ function drawCell(ctx, type, r, c, inFog, specials, images) {
     drawCrack(ctx, x, y)
   } else if (type === T.SWITCH) {
     const sw = specials?.find(s => s.type === 'switch' && s.r === r && s.c === c)
-    drawSwitch(ctx, x, y, sw?.active)
+    drawSwitch(ctx, x, y, sw?.active, t)
   } else {
     if (images?.tiles?.floor instanceof HTMLImageElement) {
       ctx.drawImage(images.tiles.floor, x, y, CS, CS)
@@ -252,7 +253,7 @@ function drawCrack(ctx, x, y) {
   ctx.fillRect(x, y, CS, CS)
 }
 
-function drawSwitch(ctx, x, y, active) {
+function drawSwitch(ctx, x, y, active, t) {
   ctx.fillStyle = '#182030'
   ctx.fillRect(x, y, CS, CS)
   ctx.fillStyle = active ? '#4caf50' : '#c07000'
@@ -260,7 +261,7 @@ function drawSwitch(ctx, x, y, active) {
   ctx.fillStyle = '#fff'
   ctx.font = `bold ${Math.floor(CS / 4)}px monospace`
   ctx.textAlign = 'center'
-  ctx.fillText(active ? 'ON' : 'SW', x + CS / 2, y + CS / 2 + 5)
+  ctx.fillText(active ? t('gameBoard.switchOn') : t('gameBoard.switchOff'), x + CS / 2, y + CS / 2 + 5)
 }
 
 function drawTarget(ctx, targetObj, images) {
@@ -360,7 +361,7 @@ function drawPlayer(ctx, pos, playerNum, images, xOffset = 0) {
   const x = pos.c * CS + xOffset, y = pos.r * CS
   const isP2 = playerNum === 2
   const dir = pos.dir ?? 'down'
-  const spriteKey = dirToSpriteKey(dir)
+  const spriteKey = dirToSpriteKey(dir, isP2)
   const img = images?.sprites?.[spriteKey]
   
   if (img instanceof HTMLImageElement) {

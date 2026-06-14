@@ -8,18 +8,11 @@ import { useHubPlayer } from '../../hooks/useHubPlayer.js'
 import { useSwipe }     from '../../hooks/useSwipe.js'
 import { useTouchDevice } from '../../hooks/useTouchDevice.js'
 import { useAssets } from '../../contexts/AssetContext.jsx'
+import { useLanguage } from '../../i18n/LanguageContext.jsx'
 import styles from './HubScreen.module.css'
 
-/**
- * HubScreen — the full hub page.
- *
- * Responsibilities:
- *   - Owns the scene layout (TopStrip / canvas / BottomStrip / D-pad)
- *   - Owns the riddle modal state
- *   - Wires useHubPlayer (logic) → HubCanvas (draw) → DPad (input)
- *   - Wires useSwipe onto the canvas area for touch swipe movement
- */
 export default function HubScreen({ onEnterLevel }) {
+  const { t } = useLanguage()
   const [pendingDoor, setPendingDoor] = useState(null)
   const canvasAreaRef = useRef(null)
   const isTouch       = useTouchDevice()
@@ -29,7 +22,6 @@ export default function HubScreen({ onEnterLevel }) {
     (door) => setPendingDoor(door)
   )
 
-  // Swipe on the canvas area moves the player
   useSwipe(canvasAreaRef, movePlayer)
 
   return (
@@ -51,7 +43,7 @@ export default function HubScreen({ onEnterLevel }) {
           <div className={styles.touchControls}>
             <DPad
               compact
-              label="Move"
+              label={t('topStrip.moveLabel')}
               onMove={movePlayer}
               onAction={() => movePlayer('Enter')}
             />

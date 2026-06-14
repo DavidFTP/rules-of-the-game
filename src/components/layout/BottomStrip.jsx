@@ -1,5 +1,6 @@
 import React from 'react'
 import styles from './BottomStrip.module.css'
+import { useLanguage } from '../../i18n/LanguageContext.jsx'
 
 export default function BottomStrip({ config, state, tokenBag, purchases, onBuy }) {
   if (!config || config.bottomStripMode === 'tokens') {
@@ -19,19 +20,21 @@ export default function BottomStrip({ config, state, tokenBag, purchases, onBuy 
 }
 
 function TokensStrip({ tokens }) {
+  const { t } = useLanguage()
   return (
     <div className={styles.strip}>
-      <span className={styles.label}>TOKENS</span>
+      <span className={styles.label}>{t('bottomStrip.tokens')}</span>
       <div className={styles.badge}>
         <span className={styles.icon}>🪙</span>
         <span>{tokens}</span>
       </div>
-      <span className={styles.hint}>↑↓←→ MOVE &nbsp;|&nbsp; Z UNDO &nbsp;|&nbsp; R RESTART &nbsp;|&nbsp; ESC HUB</span>
+      <span className={styles.hint}>{t('bottomStrip.controls')}</span>
     </div>
   )
 }
 
 function ShopStrip({ config, tokenBag, purchases, onBuy }) {
+  const { t } = useLanguage()
   const shop = config.shop ?? {}
   const allItems = [
     ...(shop.red   ?? []),
@@ -41,7 +44,7 @@ function ShopStrip({ config, tokenBag, purchases, onBuy }) {
 
   return (
     <div className={styles.strip}>
-      <span className={styles.label}>SHOP</span>
+      <span className={styles.label}>{t('bottomStrip.shop')}</span>
       {allItems.map(item => {
         const bought    = purchases?.[item.key]
         const currency  = item.currency ?? 'gold'
@@ -52,7 +55,7 @@ function ShopStrip({ config, tokenBag, purchases, onBuy }) {
             key={item.key}
             className={`${styles.badge} ${item.tempting ? styles.tempting : ''}`}
           >
-            <span>{item.name}</span>
+            <span>{t(item.nameKey ?? item.name)}</span>
             <button
               className={`${styles.buyBtn} ${bought ? styles.bought : ''}`}
               disabled={!affordable || !!bought}
@@ -63,7 +66,7 @@ function ShopStrip({ config, tokenBag, purchases, onBuy }) {
           </div>
         )
       })}
-      <span className={styles.hint} style={{ marginLeft: 'auto' }}>
+      <span className={styles.hint} style={{ marginInlineStart: 'auto' }}>
         {Object.entries(tokenBag ?? {})
           .filter(([, v]) => v > 0)
           .map(([k, v]) => `${k}: ${v}`)

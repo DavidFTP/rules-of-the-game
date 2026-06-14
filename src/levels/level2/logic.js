@@ -1,21 +1,20 @@
 import { level2Map } from './map.js';
 
 export const config = {
-  theme: 'level2', 
+  theme: 'level2',
   topStripMode: 'marquee',
   bottomStripMode: 'tokens',
   hasTutorialButton: true,
+  tutorialKey: 'level2.tutorial',
   tutorialSegments: [
-    "Welcome to Level 2!",
-    "Sometimes the world is dark and we can't see the path clearly.",
-    "Find the switch to turn on the light and open the gate.",
-    "God's word is a lamp to my feet and a light to my path."
+    'level2.tutorial.0',
+    'level2.tutorial.1',
+    'level2.tutorial.2',
+    'level2.tutorial.3',
   ],
   enforceOrder: false,
-  fogOfWar: true, 
-  fogRadius: 1, 
-
-  
+  fogOfWar: true,
+  fogRadius: 1,
 };
 
 export const rounds = [

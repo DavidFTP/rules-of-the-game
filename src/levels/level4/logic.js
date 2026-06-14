@@ -1,23 +1,23 @@
 import { r1Map, r2Map, r3Map, bossMap } from './map.js';
 
 export const config = {
-  theme: 'level4', 
+  theme: 'level4',
   topStripMode: 'marquee',
   bottomStripMode: 'tokens',
   coop: false,
   hasTutorialButton: true,
+  tutorialKey: 'level4.tutorial',
   tutorialSegments: [
-    "Welcome to Level 4! Today's hero is Gideon.",
-    "Gideon saw himself as weak, but God made him a mighty man of valor!",
-    "⚠️ NEW MECHANIC: Gather strength (coins) in the early rounds.",
-    "In the final round, use the Powerup Menu at the bottom to spend your strength on Super Push or Wall Bombs!"
+    'level4.tutorial.0',
+    'level4.tutorial.1',
+    'level4.tutorial.2',
+    'level4.tutorial.3',
   ],
   enforceOrder: false,
-  
-  // 💡 NEW: Dynamic Powerups Menu!
+
   powerups: [
-    { id: 'superPush', name: '💪 Super Push', cost: 40, desc: 'Push 2 boxes (lasts all round)' },
-    { id: 'bomb', name: '💣 Wall Bomb', cost: 20, desc: 'Destroy all cracked walls' }
+    { id: 'superPush', nameKey: 'level4.powerup.superPush', cost: 40, desc: '' },
+    { id: 'bomb', nameKey: 'level4.powerup.bomb', cost: 20, desc: '' },
   ]
 };
 
@@ -34,7 +34,7 @@ export const rounds = [
     ],
     targets: [
       { r: 2, c: 3 },
-      { r: 2, c: 5 }, // Blocked by D!
+      { r: 2, c: 5 },
       { r: 2, c: 7 },
     ],
     playerStart: { r: 6, c: 5 },

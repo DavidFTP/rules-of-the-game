@@ -5,7 +5,7 @@ const commonConfig = {
   topStripMode: 'narrative',
   bottomStripMode: 'tokens',
   requiresPlayerSelection: true,
-  coop: true, // Ensures WASD is active for P2
+  coop: true,
 };
 
 export const rounds = [
@@ -13,45 +13,40 @@ export const rounds = [
     map: map1,
     config: {
       ...commonConfig,
-      narrativeText: 'Round 1: A humble start. You can move this box easily.',
+      narrativeKey: 'level3.narrative.0',
     }
   },
   {
     map: map2,
     config: {
       ...commonConfig,
-      narrativeText: 'Round 2: This box is too heavy for pride. Work together!',
+      narrativeKey: 'level3.narrative.1',
     }
   },
   {
     map: map3,
     config: {
       ...commonConfig,
-      narrativeText: 'Round 3: Double the burden. Stay humble and coordinate!',
+      narrativeKey: 'level3.narrative.2',
     }
   }
 ];
 
-// Hook triggered right before a player pushes a box.
 export const onBeforeBoxPush = (state, box, playerNum, dx, dy) => {
   if (!box.isHeavy) return { allowed: true };
 
-  // (We deleted the solo bypass rule here!)
-
-  // Check if the OTHER player is on the EXACT SAME TILE
   const otherPlayer = playerNum === 1 ? state.player2Pos : state.playerPos;
-  
-  const isOtherPlayerHelping = 
+
+  const isOtherPlayerHelping =
     otherPlayer &&
-    otherPlayer.r === box.r - dy && 
+    otherPlayer.r === box.r - dy &&
     otherPlayer.c === box.c - dx;
 
-  // Reject the push if they are trying to do it alone
   if (!isOtherPlayerHelping) {
-    return { 
-      allowed: false, 
-      errorText: '2 Players Required!', 
-      errorPos: { r: box.r, c: box.c } 
+    return {
+      allowed: false,
+      errorTextKey: 'gameBoard.twoPlayersRequired',
+      errorPos: { r: box.r, c: box.c }
     };
   }
 

@@ -7,31 +7,28 @@ export const config = {
   coop: false,
   hasTutorialButton: false,
   enforceOrder: true,
-  
-  // Dynamic Council Texts
+
   councilTexts: {
     intro: {
-      left: "Walk through the West Door. It is the logical path.",
-      right: "Walk through the East Door. It is the true path."
+      left: 'level6.council.intro.left',
+      right: 'level6.council.intro.right'
     },
     world: {
-      left: "Good. Now place RED first, then BLUE.",
-      right: "You chose wrong. There is no turning back."
+      left: 'level6.council.world.left',
+      right: 'level6.council.world.right'
     },
     truth: {
-      left: "You ignored us. You will regret it.",
-      right: "Good. Now place BLUE first, then RED."
+      left: 'level6.council.truth.left',
+      right: 'level6.council.truth.right'
     }
   }
 };
 
 export const rounds = [
-  // Round 0: The Choice Room
   {
     map: choiceMap,
-    playerStart: { r: 3, c: 6 } // Start dead center
+    playerStart: { r: 3, c: 6 }
   },
-  // Round 1: The Left Puzzle (World)
   {
     map: leftPuzzleMap,
     boxes: [
@@ -41,7 +38,6 @@ export const rounds = [
     targets: [{ r: 2, c: 2 }, { r: 2, c: 7 }],
     playerStart: { r: 5, c: 4 }
   },
-  // Round 2: The Right Puzzle (Truth)
   {
     map: rightPuzzleMap,
     boxes: [

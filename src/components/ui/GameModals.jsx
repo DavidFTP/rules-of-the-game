@@ -1,68 +1,67 @@
 import React from 'react'
 import Modal, { ModalTitle, ModalBody, Btn } from './Modal.jsx'
+import { useLanguage } from '../../i18n/LanguageContext.jsx'
 
-/** Shown when the entire level is complete */
 export function WinModal({ levelNum, tokens, onHub }) {
+  const { t } = useLanguage()
   return (
     <Modal>
-      <ModalTitle>🎉 Level {levelNum} Complete!</ModalTitle>
+      <ModalTitle>{t('win.title', { n: levelNum })}</ModalTitle>
       <ModalBody>
-        Well done — you made it through every round!
+        {t('win.body')}
         {tokens > 0 && (
           <span style={{ display: 'block', color: 'var(--gold)', marginTop: 10 }}>
-            Total tokens earned: 🪙 {tokens}
+            {t('win.tokens', { n: tokens })}
           </span>
         )}
       </ModalBody>
-      <Btn variant="green" onClick={onHub}>Back to Hub</Btn>
+      <Btn variant="green" onClick={onHub}>{t('win.backToHub')}</Btn>
     </Modal>
   )
 }
 
-/** Shown between rounds — "Round X done, next round coming" */
 export function RoundWinModal({ roundNum, totalRounds, tokens, onNext, onHub }) {
+  const { t } = useLanguage()
   return (
     <Modal>
-      <ModalTitle>✅ Round {roundNum} of {totalRounds} Done!</ModalTitle>
+      <ModalTitle>{t('roundWin.title', { n: roundNum, total: totalRounds })}</ModalTitle>
       <ModalBody>
-        Great push! Keep going — the next round is waiting.
+        {t('roundWin.body')}
         {tokens > 0 && (
           <span style={{ display: 'block', color: 'var(--gold)', marginTop: 10 }}>
-            Tokens so far: 🪙 {tokens}
+            {t('roundWin.tokens', { n: tokens })}
           </span>
         )}
       </ModalBody>
-      <Btn variant="gold"      onClick={onNext}>Next Round →</Btn>
-      <Btn variant="secondary" onClick={onHub}>Hub</Btn>
+      <Btn variant="gold"      onClick={onNext}>{t('roundWin.next')}</Btn>
+      <Btn variant="secondary" onClick={onHub}>{t('roundWin.hub')}</Btn>
     </Modal>
   )
 }
 
-/** Gold box fell on a crack tile */
 export function CrackLoseModal({ onRetry, onHub }) {
+  const { t } = useLanguage()
   return (
     <Modal>
-      <ModalTitle>💥 The Floor Gave Way!</ModalTitle>
+      <ModalTitle>{t('crackLose.title')}</ModalTitle>
       <ModalBody>
-        Heavy boxes are risky. The cracked floor couldn't hold the weight.
-        Sometimes the humble path is the safe one.
+        {t('crackLose.body')}
       </ModalBody>
-      <Btn variant="primary"   onClick={onRetry}>Try Again</Btn>
-      <Btn variant="secondary" onClick={onHub}>Hub</Btn>
+      <Btn variant="primary"   onClick={onRetry}>{t('crackLose.tryAgain')}</Btn>
+      <Btn variant="secondary" onClick={onHub}>{t('roundWin.hub')}</Btn>
     </Modal>
   )
 }
 
-/** Levels not yet built */
 export function ComingSoonModal({ levelNum, onHub }) {
+  const { t } = useLanguage()
   return (
     <Modal>
-      <ModalTitle>🔒 Level {levelNum}</ModalTitle>
+      <ModalTitle>{t('comingSoon.title', { n: levelNum })}</ModalTitle>
       <ModalBody>
-        This level is coming soon! The engine and config are all ready —
-        the puzzle maps just need to be designed and wired in.
+        {t('comingSoon.body')}
       </ModalBody>
-      <Btn variant="secondary" onClick={onHub}>Back to Hub</Btn>
+      <Btn variant="secondary" onClick={onHub}>{t('comingSoon.backToHub')}</Btn>
     </Modal>
   )
 }

@@ -1,9 +1,3 @@
-// Level 9 — Red vs Blue Tokens / Shop
-// Red boxes drop big red tokens. Blue boxes drop small blue tokens.
-// The shop offers flashy red upgrades and modest blue ones.
-// But only the blue upgrade lets you push the final round's special boxes.
-// Lesson: don't chase what glitters.
-
 export const rounds = [
   {
     map: [
@@ -42,7 +36,6 @@ export const rounds = [
     targets: [{ r: 2, c: 2 }, { r: 2, c: 5 }, { r: 2, c: 8 }],
     playerStart: { r: 5, c: 6 },
     isFinal: true,
-    // These boxes can only be pushed if player has blueStrength upgrade
     gatedBoxIds: ['r2-blue1', 'r2-blue2'],
     gateKey: 'blueStrength',
   },
@@ -50,19 +43,19 @@ export const rounds = [
 
 export const shop = {
   red: [
-    { name: '+100 Red Power', cost: 100, currency: 'red', key: 'redPower',  value: 100, tempting: true  },
-    { name: '+250 Red Crit',  cost: 200, currency: 'red', key: 'redCrit',   value: 250, tempting: true  },
+    { nameKey: 'level9.shop.red.0.name', cost: 100, currency: 'red', key: 'redPower',  value: 100, tempting: true  },
+    { nameKey: 'level9.shop.red.1.name', cost: 200, currency: 'red', key: 'redCrit',   value: 250, tempting: true  },
   ],
   blue: [
-    { name: '+10 Blue Str',   cost: 50,  currency: 'blue', key: 'blueStrength', value: 10 },
-    { name: '+15 Blue Speed', cost: 75,  currency: 'blue', key: 'blueSpeed',    value: 15 },
+    { nameKey: 'level9.shop.blue.0.name', cost: 50,  currency: 'blue', key: 'blueStrength', value: 10 },
+    { nameKey: 'level9.shop.blue.1.name', cost: 75,  currency: 'blue', key: 'blueSpeed',    value: 15 },
   ],
 }
 
 export const config = {
   topStripMode: 'narrative',
   bottomStripMode: 'shop',
-  narrativeText: '🔵 Blue may look small... but it\'s the only thing that moves what matters.',
+  narrativeKey: 'level9.narrative',
   multiRound: true,
   shop,
   finalGateKey: 'blueStrength',

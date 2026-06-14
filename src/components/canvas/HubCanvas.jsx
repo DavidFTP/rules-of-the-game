@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { hubMap, hubDoors } from '../../levels/hub/hubData.js'
 import { dirToSpriteKey } from '../../config/spriteConfig.js'
+import { useLanguage } from '../../i18n/LanguageContext.jsx'
 import styles from './HubCanvas.module.css'
 
 const CS         = 72
@@ -27,6 +28,7 @@ function getCameraOrigin(p) {
  * No logic. No input handling. No state.
  */
 export default function HubCanvas({ playerRef, nearestDoor, images = null }) {
+  const { t } = useLanguage()
   const canvasRef = useRef(null)
   const rafRef    = useRef(null)
 
@@ -125,11 +127,11 @@ export default function HubCanvas({ playerRef, nearestDoor, images = null }) {
         const dy = (near.row - camR) * CS - 8
         if (dx > 0 && dy > 0 && dx < canvas.width && dy < canvas.height) {
           ctx.fillStyle = 'rgba(0,0,0,0.75)'
-          ctx.fillRect(dx-70, dy-18, 140, 22)
+          ctx.fillRect(dx-80, dy-18, 160, 22)
           ctx.fillStyle = '#f5a623'
           ctx.font = 'bold 11px monospace'
           ctx.textAlign = 'center'
-          ctx.fillText('Press E / tap ✦ to enter', dx, dy)
+          ctx.fillText(t('hubCanvas.pressToEnter'), dx, dy)
         }
       }
     }
@@ -137,7 +139,7 @@ export default function HubCanvas({ playerRef, nearestDoor, images = null }) {
     function loop() { draw(); rafRef.current = requestAnimationFrame(loop) }
     rafRef.current = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(rafRef.current)
-  }, [playerRef, nearestDoor, images])
+  }, [playerRef, nearestDoor, images, t])
 
   return (
     <div className={styles.wrap}>

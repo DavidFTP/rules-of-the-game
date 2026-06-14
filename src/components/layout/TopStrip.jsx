@@ -1,180 +1,169 @@
 import React from 'react'
 import styles from './TopStrip.module.css'
-
+import { useLanguage } from '../../i18n/LanguageContext.jsx'
 
 export default function TopStrip({ config, state, levelNum, restarts, roundIndex, totalRounds, onTutorialClick }) {
-  // 💡 OVERRIDE FOR LEVEL 6: Force it to display 2 rounds!
-  const isLevel6 = config?.theme === 'level6' || state?.config?.theme === 'level6';
-  const displayTotal = isLevel6 ? 2 : totalRounds;
-  const displayRound = isLevel6 ? (roundIndex > 0 ? 2 : 1) : ((roundIndex ?? 0) + 1);
+  const { t } = useLanguage()
 
-  const roundInfo = displayTotal > 1
-    ? <span className={styles.roundBadge}>Round {displayRound}/{displayTotal}</span>
-    : null
+  const isLevel6 = config?.theme === 'level6' || state?.config?.theme === 'level6'
+  const displayTotal = isLevel6 ? 2 : totalRounds
+  const displayRound = isLevel6 ? (roundIndex > 0 ? 2 : 1) : ((roundIndex ?? 0) + 1)
 
-  const isClickable = !!config?.hasTutorialButton;
+  const isClickable = !!config?.hasTutorialButton
+  const isHub = !config
 
-  // Wrap your existing logic in a helper function
-  const renderStrip = () => {
-    if (!config) return <DefaultStrip levelNum={levelNum} state={state} roundInfo={roundInfo} />
-    
+  if (isHub) {
+    return (
+      <div className={styles.strip}>
+        <span className={styles.title}>{t('topStrip.theWay')}</span>
+        <div className={styles.spacer} />
+        <LangToggle />
+      </div>
+    )
+  }
+
+  const renderCenter = () => {
     switch (config.topStripMode) {
-      case 'marquee':  return <MarqueeStrip   config={config} state={state} levelNum={levelNum} roundInfo={roundInfo} />
-      case 'narrative':return <NarrativeStrip config={config} state={state} levelNum={levelNum} roundInfo={roundInfo} />
-      case 'council':  return <CouncilStrip   config={config} state={state} roundInfo={roundInfo} />
-      case 'simon':    return <SimonStrip     config={config} state={state} levelNum={levelNum} />
-      case 'hints':    return <HintsStrip     config={config} restarts={restarts} roundInfo={roundInfo} />
-      default:         return <DefaultStrip   levelNum={levelNum} state={state} roundInfo={roundInfo} />
+      case 'marquee':  return <MarqueeStrip   config={config} />
+      case 'narrative':return <NarrativeStrip config={config} />
+      case 'council':  return <CouncilStrip   config={config} state={state} />
+      case 'simon':    return <SimonStrip     config={config} state={state} />
+      case 'hints':    return <HintsStrip     config={config} restarts={restarts} />
+      default:         return <DefaultStrip   config={config} />
     }
   }
 
   return (
-    <div 
-      onClick={isClickable ? onTutorialClick : undefined} 
-      style={{ 
-        position: 'relative', 
-        cursor: isClickable ? 'pointer' : 'default',
-        opacity: isClickable ? 0.95 : 1 // Slight visual hint that it's clickable
-      }}
-      title={isClickable ? "Click to read the rules" : ""}
-    >
-      {renderStrip()}
-      
-      {/* Small floating hint on the right side if rules are available */}
-      {isClickable && (
-        <div style={{
-          position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)',
-          fontSize: '0.9rem', color: '#FFD700', fontWeight: 'bold', textShadow: '1px 1px 2px #000',
-          zIndex: 10
-        }}>
-        </div>
-      )}
+    <div className={styles.strip}>
+      <div className={styles.sideCol}>
+        <span className={styles.title}>{t('topStrip.lvl', { n: levelNum })}</span>
+        {displayTotal > 1 && (
+          <span className={styles.roundBadge}>{t('topStrip.round', { n: displayRound, total: displayTotal })}</span>
+        )}
+      </div>
+
+      <div
+        className={styles.centerArea}
+        onClick={isClickable ? onTutorialClick : undefined}
+        style={{ cursor: isClickable ? 'pointer' : 'default' }}
+        title={isClickable ? t('levelScreen.levelRules') : ''}
+      >
+        {renderCenter()}
+      </div>
+
+      <div className={styles.sideCol}>
+        <span className={styles.meta}>{t('topStrip.moves', { n: state?.moves ?? 0 })}</span>
+        <LangToggle />
+      </div>
     </div>
   )
 }
 
-function CouncilStrip({ config, state, roundInfo }) {
-  const isLevel6 = config.theme === 'level6';
-  
-  let leftText = config.council?.worldSays;
-  let rightText = config.council?.truthSays;
+function LangToggle() {
+  const { lang, toggleLang, t } = useLanguage()
+  return (
+    <button className={styles.langBtn} onClick={toggleLang} title={t('lang.toggle')}>
+      {t('lang.label')}
+    </button>
+  )
+}
 
-  if (isLevel6 && config.councilTexts) {
+function DefaultStrip({ config }) {
+  const { t } = useLanguage()
+  const segKeys = config?.tutorialSegments
+  return (
+    <span className={styles.text}>
+      {segKeys ? t(segKeys[0]) : t('topStrip.defaultInstruction')}
+    </span>
+  )
+}
+
+function NarrativeStrip({ config }) {
+  const { t } = useLanguage()
+  const key = config?.narrativeKey
+  return <span className={styles.text}>{key ? t(key) : ''}</span>
+}
+
+function MarqueeStrip({ config }) {
+  const { t } = useLanguage()
+  const segKeys = config?.tutorialSegments ?? []
+  return (
+    <div className={styles.marqueeWrap}>
+      <div className={styles.marqueeTrack}>
+        {segKeys.map((key, i) =>
+          key === 'CLUE'
+            ? <span key={i} className={styles.clue}>{t('topStrip.clue')}</span>
+            : <span key={i}>{t(key)}</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function CouncilStrip({ config, state }) {
+  const { t } = useLanguage()
+
+  let leftKey = 'level6.council.intro.left'
+  let rightKey = 'level6.council.intro.right'
+
+  if (config?.theme === 'level6' && config.councilTexts) {
     if (state?.roundIndex === 0) {
-      leftText = config.councilTexts.intro.left;
-      rightText = config.councilTexts.intro.right;
+      leftKey = config.councilTexts.intro.left
+      rightKey = config.councilTexts.intro.right
     } else if (state?.chosenPath === 'left') {
-      leftText = config.councilTexts.world.left;
-      rightText = config.councilTexts.world.right;
+      leftKey = config.councilTexts.world.left
+      rightKey = config.councilTexts.world.right
     } else {
-      leftText = config.councilTexts.truth.left;
-      rightText = config.councilTexts.truth.right;
+      leftKey = config.councilTexts.truth.left
+      rightKey = config.councilTexts.truth.right
     }
   }
 
-  const councilStyle = isLevel6 ? {
-    borderColor: '#666', color: '#eee', borderLeft: '3px solid #666', background: 'rgba(255,255,255,0.08)'
-  } : {};
+  const style = config?.theme === 'level6' ? {
+    borderColor: '#666', color: '#eee', borderInlineStart: '3px solid #666', background: 'rgba(255,255,255,0.08)'
+  } : {}
 
   return (
-    <div className={`${styles.strip} ${styles.councilWrap}`}>
-      {roundInfo && <span className={styles.title} style={{flexShrink:0}}>{roundInfo}</span>}
-      <div className={`${styles.council} ${!isLevel6 ? styles.worldCouncil : ''}`} style={councilStyle}>
-        <div className={styles.councilLabel}>VOICE 1</div>{leftText}
+    <div className={styles.councilWrap}>
+      <div className={`${styles.council} ${config?.theme === 'level6' ? '' : styles.worldCouncil}`} style={style}>
+        <div className={styles.councilLabel}>{t('topStrip.voice1')}</div>{t(leftKey)}
       </div>
-      <div className={`${styles.council} ${!isLevel6 ? styles.truthCouncil : ''}`} style={councilStyle}>
-        <div className={styles.councilLabel}>VOICE 2</div>{rightText}
-      </div>
-    </div>
-  )
-}
-
-function DefaultStrip({ levelNum, state, roundInfo }) {
-  return (
-    <div className={styles.strip}>
-      <span className={styles.title}>{levelNum ? `LVL ${levelNum}` : 'THE WAY'}</span>
-      {roundInfo}
-      <span className={styles.text}>Use arrow keys to move. Push boxes onto the targets.</span>
-      <span className={styles.meta}>Moves: <em>{state?.moves ?? 0}</em></span>
-    </div>
-  )
-}
-
-function NarrativeStrip({ config, state, levelNum, roundInfo }) {
-  return (
-    <div className={styles.strip}>
-      <span className={styles.title}>LVL {levelNum}</span>
-      {roundInfo}
-      <span className={styles.text}>{config.narrativeText}</span>
-      <span className={styles.meta}>Moves: <em>{state?.moves ?? 0}</em></span>
-    </div>
-  )
-}
-
-function MarqueeStrip({ config, state, levelNum, roundInfo }) {
-  const segments = config.tutorialSegments ?? []
-  return (
-    <div className={styles.strip}>
-      <span className={styles.title}>LVL {levelNum}</span>
-      {roundInfo}
-      <div className={styles.marqueeWrap}>
-        <div className={styles.marqueeTrack}>
-          {segments.map((seg, i) =>
-            seg === 'CLUE'
-              ? <span key={i} className={styles.clue}>push the GREY box LAST</span>
-              : <span key={i}>{seg}</span>
-          )}
-        </div>
-      </div>
-      <span className={styles.meta}>Moves: <em>{state?.moves ?? 0}</em></span>
-    </div>
-  )
-}
-
-
-function SimonStrip({ config, state, levelNum }) {
-  // 🚨 THE FIX: Look at state.config first so we get the current round's sequence!
-  const activeConfig = state?.config || config;
-  const seq  = activeConfig.simonSequence ?? [];
-  const done = state?.simonStep ?? 0;
-  
-  const arrowMap = { ArrowUp: '⬆️ UP', ArrowDown: '⬇️ DOWN', ArrowLeft: '⬅️ LEFT', ArrowRight: '➡️ RIGHT' };
-  const currentCommand = seq[done];
-
-  return (
-    <div className={styles.strip} style={{ justifyContent: 'center', position: 'relative' }}>
-      <span className={styles.title} style={{ position: 'absolute', left: '18px' }}>LVL {levelNum}</span>
-      
-      <div style={{ 
-        fontSize: '15px', 
-        fontWeight: 'bold', 
-        letterSpacing: '1px', 
-        color: '#FFD700',
-        fontFamily: 'monospace'
-      }}>
-        {currentCommand 
-            ? `NEXT: ${arrowMap[currentCommand] || currentCommand}` 
-            : "✅ ALL INSTRUCTIONS FOLLOWED"}
+      <div className={`${styles.council} ${config?.theme === 'level6' ? '' : styles.truthCouncil}`} style={style}>
+        <div className={styles.councilLabel}>{t('topStrip.voice2')}</div>{t(rightKey)}
       </div>
     </div>
   )
 }
 
-function HintsStrip({ config, restarts, roundInfo }) {
+function SimonStrip({ config, state }) {
+  const { t } = useLanguage()
+  const activeConfig = state?.config || config
+  const seq = activeConfig.simonSequence ?? []
+  const done = state?.simonStep ?? 0
+  const currentCommand = seq[done]
+  const arrowNames = { ArrowUp: 'UP', ArrowDown: 'DOWN', ArrowLeft: 'LEFT', ArrowRight: 'RIGHT' }
+
+  return (
+    <span className={styles.text} style={{ fontWeight: 'bold', letterSpacing: '1px', color: '#FFD700', fontFamily: 'monospace', textAlign: 'center' }}>
+      {currentCommand
+        ? t('topStrip.next', { direction: arrowNames[currentCommand] || currentCommand })
+        : t('topStrip.allDone')}
+    </span>
+  )
+}
+
+function HintsStrip({ config, restarts }) {
+  const { t } = useLanguage()
   const threshold = config.hintThreshold ?? 3
-  const hints     = config.hints ?? []
-  const hintIdx   = Math.min(restarts - threshold, hints.length - 1)
-  const showHint  = restarts >= threshold && hintIdx >= 0
+  const hints = config.hints ?? []
+  const hintIdx = Math.min(restarts - threshold, hints.length - 1)
+  const showHint = restarts >= threshold && hintIdx >= 0
+
   return (
-    <div className={styles.strip}>
-      <span className={styles.title}>LVL 8</span>
-      {roundInfo}
-      <span className={styles.text}>
-        {showHint
-          ? <><strong>💡 Hint:</strong> {hints[hintIdx]}</>
-          : 'Think carefully before you push... every move counts.'}
-      </span>
-      <span className={styles.meta}>Tries: <em>{restarts}</em></span>
-    </div>
+    <span className={styles.text}>
+      {showHint
+        ? <><strong>{t('topStrip.hintPrefix')}</strong> {t(hints[hintIdx])}</>
+        : t('topStrip.defaultHint')}
+    </span>
   )
 }

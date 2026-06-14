@@ -116,12 +116,14 @@ export function getAsset(map, path) {
 }
 
 // Map player direction ('up', 'down', 'left', 'right') to sprite key ('backStill', 'frontStill', etc.)
-export function dirToSpriteKey(dir) {
+// Use isP2=true to get the player 2 variant (e.g. 'backStill_2')
+export function dirToSpriteKey(dir, isP2 = false) {
   const dirMap = {
     up: 'backStill',
     down: 'frontStill',
     left: 'leftStill',
     right: 'rightStill',
   }
-  return dirMap[dir] ?? 'frontStill'
+  const base = dirMap[dir] ?? 'frontStill'
+  return isP2 ? base + '_2' : base
 }

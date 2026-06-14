@@ -48,7 +48,7 @@ export function moveEntity(state, key, playerKey = 'playerPos', onBeforeBoxPush 
         return { 
           ...state, 
           _bump: true, 
-          _boxError: { text: result.errorText, r: pushedBox.r, c: pushedBox.c } 
+          _boxError: { text: result.errorText, textKey: result.errorTextKey, r: pushedBox.r, c: pushedBox.c } 
         };
       }
     }

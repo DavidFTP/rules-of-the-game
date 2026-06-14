@@ -1,0 +1,35 @@
+[dir="rtl"] .marqueeTrack {
+  animation-name: marqueeRtl !important;
+}
+
+@keyframes marqueeRtl {
+  from { transform: translateX(-80vw); }
+  to   { transform: translateX(100%); }
+}
+
+[dir="rtl"] .side .deco {
+  writing-mode: vertical-lr;
+}
+
+[dir="rtl"] .council {
+  border-left: none !important;
+  border-right: 3px solid;
+}
+
+[dir="rtl"] .worldCouncil {
+  border-right-color: #e94560 !important;
+}
+
+[dir="rtl"] .truthCouncil {
+  border-right-color: #4caf50 !important;
+}
+
+[dir="rtl"] .escButton {
+  left: auto !important;
+  right: 12px !important;
+}
+
+[dir="rtl"] .topRightButtons {
+  right: auto !important;
+  left: 12px !important;
+}

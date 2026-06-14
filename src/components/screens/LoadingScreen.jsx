@@ -1,20 +1,22 @@
 import React from 'react'
 import styles from './LoadingScreen.module.css'
+import { useLanguage } from '../../i18n/LanguageContext.jsx'
 
 export default function LoadingScreen({ progress = {}, error = null }) {
+  const { t } = useLanguage()
   const { loaded = 0, total = 0 } = progress
   const percent = total > 0 ? Math.round((loaded / total) * 100) : 0
 
   return (
     <div className={styles.screen}>
       <div className={styles.container}>
-        <div className={styles.title}>{error ? 'Load Error' : 'Loading Game...'}</div>
+        <div className={styles.title}>{error ? t('loading.errorTitle') : t('loading.title')}</div>
         
         {error ? (
           <div className={styles.errorBox}>
-            <p>Sorry, we could not load the game assets.</p>
+            <p>{t('loading.sorry')}</p>
             <pre>{String(error.message)}</pre>
-            <p>Please try refreshing the page.</p>
+            <p>{t('loading.refresh')}</p>
           </div>
         ) : (
           <>
@@ -30,11 +32,11 @@ export default function LoadingScreen({ progress = {}, error = null }) {
             </div>
 
             <div className={styles.progressText}>
-              {total > 0 ? `${loaded} / ${total} assets` : 'Initializing...'}
+              {total > 0 ? t('loading.progress', { loaded, total }) : t('loading.initializing')}
             </div>
 
             <div className={styles.message}>
-              Getting your game ready...
+              {t('loading.gettingReady')}
             </div>
           </>
         )}

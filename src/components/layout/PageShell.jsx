@@ -1,11 +1,14 @@
 import React from 'react'
 import styles from './PageShell.module.css'
+import { useLanguage } from '../../i18n/LanguageContext.jsx'
 
 export default function PageShell({ children }) {
+  const { t } = useLanguage()
+
   return (
     <div className={styles.shell}>
       <aside className={styles.side} aria-hidden="true">
-        <span className={styles.deco}>THE WAY • SOKOBAN • THE WAY • SOKOBAN •</span>
+        <span className={styles.deco}>{t('sidebar.left')}</span>
       </aside>
 
       <main className={styles.field}>
@@ -13,7 +16,7 @@ export default function PageShell({ children }) {
       </main>
 
       <aside className={styles.side} aria-hidden="true">
-        <span className={styles.deco}>LEARN • GROW • PLAY • LEARN • GROW •</span>
+        <span className={styles.deco}>{t('sidebar.right')}</span>
       </aside>
     </div>
   )
