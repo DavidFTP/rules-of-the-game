@@ -15,9 +15,9 @@ export const DEFAULT_ASSET_MODE = ASSET_MODE.ASSETS
 // Map of helpful asset URLs (uses Vite-friendly new URL resolution)
 export const ASSET_PATHS = {
   tiles: {
-    floor: new URL('../assets/tiles/greyg.png', import.meta.url).href,
-    wall:  new URL('../assets/tiles/redW2.png', import.meta.url).href,
-    targetGround: new URL('../assets/tiles/greytarget.png', import.meta.url).href,
+    floor: new URL('../assets/tiles/tan-g.png', import.meta.url).href,
+    wall:  new URL('../assets/tiles/blue-grey-vibrant-w.png', import.meta.url).href,
+    targetGround: new URL('../assets/tiles/tan-target-g.png', import.meta.url).href,
   },
   boxes: {
     default:  new URL('../assets/crates/default.png', import.meta.url).href,

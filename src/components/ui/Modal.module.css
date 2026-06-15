@@ -13,8 +13,8 @@
   background: #0d1b2a;
   border: 2px solid #e94560;
   border-radius: var(--radius);
-  padding: 38px 44px;
-  max-width: 500px;
+  padding: clamp(16px, 4vw, 28px) clamp(16px, 6vw, 32px);
+  max-width: 380px;
   width: 90%;
   text-align: center;
   box-shadow: 0 0 60px rgba(233,69,96,0.25);
@@ -22,18 +22,18 @@
 
 .title {
   font-family: var(--font-pixel);
-  font-size: 22px;
+  font-size: clamp(14px, 3.5vw, 18px);
   color: var(--gold);
-  margin-bottom: 18px;
+  margin-bottom: clamp(8px, 2.5vw, 14px);
   line-height: 1.6;
 }
 
 .body {
   font-family: var(--font-body);
-  font-size: 24px;
-  line-height: 1.75;
+  font-size: clamp(14px, 3.6vw, 19px);
+  line-height: 1.6;
   color: #bbc;
-  margin-bottom: 20px;
+  margin-bottom: clamp(10px, 3vw, 16px);
 }
 
 .error {

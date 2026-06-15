@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { hubMap, hubDoors } from '../../levels/hub/hubData.js'
 import { dirToSpriteKey } from '../../config/spriteConfig.js'
 import { useLanguage } from '../../i18n/LanguageContext.jsx'
@@ -35,10 +35,11 @@ function getCameraOrigin(p, vw, vh) {
  * Runs its own RAF loop because the hub world animates (door glow pulses).
  * No logic. No input handling. No state.
  */
-export default function HubCanvas({ playerRef, nearestDoor, images = null }) {
+export default function HubCanvas({ playerRef, nearestDoor, images = null, isTouch = false, dpadVisible = false, onAction }) {
   const { t } = useLanguage()
   const canvasRef = useRef(null)
   const rafRef    = useRef(null)
+  const [nearDoor, setNearDoor] = useState(null)
 
   const wrapRef = useRef(null)
   const dimsRef = useRef(computeViewport(800, 600))
@@ -145,14 +146,20 @@ export default function HubCanvas({ playerRef, nearestDoor, images = null }) {
       const py = (p.r - camR) * cs
       drawCharacter(ctx, px, py, cs, images, p.dir ?? 'down')
 
-      // "Tap E" prompt
+      // Track nearest door for the floating button
       const near = nearestDoor?.()
+      setNearDoor(prev => {
+        const prevId = prev?.id ?? null
+        const newId  = near?.id ?? null
+        return prevId !== newId ? near : prev
+      })
+
       if (near) {
         const dx = (near.col - camC) * cs + cs/2
         const dy = (near.row - camR) * cs - 8
         if (dx > 0 && dy > 0 && dx < cw && dy < ch) {
           ctx.fillStyle = 'rgba(0,0,0,0.75)'
-          ctx.fillRect(dx-80, dy-18, 160, 22)
+          ctx.fillRect(dx-85, dy-18, 170, 22)
           ctx.fillStyle = '#f5a623'
           ctx.font = 'bold 16px monospace'
           ctx.textAlign = 'center'
@@ -169,6 +176,9 @@ export default function HubCanvas({ playerRef, nearestDoor, images = null }) {
   return (
     <div className={styles.wrap} ref={wrapRef}>
       <canvas ref={canvasRef} className={styles.canvas} />
+      {nearDoor && isTouch && !dpadVisible && (
+        <button className={styles.doorBtn} onClick={onAction}>✦</button>
+      )}
     </div>
   )
 }

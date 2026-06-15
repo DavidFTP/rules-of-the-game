@@ -4,7 +4,7 @@ import { useAssets } from '../../contexts/AssetContext.jsx'
 import TopStrip    from '../layout/TopStrip.jsx'
 import BottomStrip from '../layout/BottomStrip.jsx'
 import DPad        from '../ui/DPad.jsx'
-import Modal       from '../ui/Modal.jsx'
+import Modal, { ModalTitle, ModalBody, Btn } from '../ui/Modal.jsx'
 import { WinModal, CrackLoseModal, ComingSoonModal, RoundWinModal } from '../ui/GameModals.jsx'
 import { useGameEngine }  from '../../hooks/useGameEngine.js'
 import { useTokens }      from '../../hooks/useTokens.js'
@@ -199,8 +199,7 @@ export default function LevelScreen({ levelNum, onHub }) {
           <div className={styles.escButton}>
             <button
               className={styles.iconBtn}
-              onTouchStart={e => { e.preventDefault(); onHub() }}
-              onMouseDown={onHub}
+              onClick={onHub}
               aria-label={t('levelScreen.returnToHub')}
             >
               ⌂
@@ -218,16 +217,14 @@ export default function LevelScreen({ levelNum, onHub }) {
             )}
             <button
               className={styles.iconBtn}
-              onTouchStart={e => { e.preventDefault(); handleUndo?.() }}
-              onMouseDown={handleUndo}
+              onClick={() => handleUndo?.()}
               aria-label={t('levelScreen.undo')}
             >
               ↩
             </button>
             <button
               className={styles.iconBtn}
-              onTouchStart={e => { e.preventDefault(); handleRestart() }}
-              onMouseDown={handleRestart}
+              onClick={handleRestart}
               aria-label={t('levelScreen.restart')}
             >
               ↺
@@ -269,45 +266,20 @@ export default function LevelScreen({ levelNum, onHub }) {
 
         {showTutorial && (
           <Modal onClose={() => setShowTutorial(false)}>
-            <div style={{ 
-              maxWidth: '420px', margin: '0 auto',
-              border: '4px solid #FFD700', borderRadius: '12px',
-              backgroundColor: '#1a1a2e', padding: '24px',
-              textAlign: 'center', lineHeight: '1.5',
-              boxShadow: '0px 10px 30px rgba(0,0,0,0.8)'
-            }}>
-              <h2 style={{ margin: '0 0 15px 0', color: '#FFD700', fontSize: '1.4rem' }}>
-                {t('levelScreen.levelRules')}
-              </h2>
-
+            <ModalTitle>{t('levelScreen.levelRules')}</ModalTitle>
+            <ModalBody>
               {config.tutorialSegments?.map((key, i) => {
                 if (key === 'CLUE') return null
                 const text = t(key)
                 const isWarning = text.includes('⚠')
                 return (
-                  <p key={i} style={{ 
-                    margin: '0 0 10px 0', fontSize: '1rem',
-                    color: isWarning ? '#ff6b6b' : '#e0e0e0',
-                    fontWeight: isWarning ? 'bold' : 'normal'
-                  }}>
+                  <span key={i} style={{ display: 'block', marginBottom: 8, color: isWarning ? '#ff6b6b' : 'inherit', fontWeight: isWarning ? 'bold' : 'normal' }}>
                     {text}
-                  </p>
+                  </span>
                 )
               })}
-              
-              <button 
-                onClick={() => setShowTutorial(false)}
-                style={{
-                  width: '100%', padding: '12px', marginTop: '15px',
-                  backgroundColor: '#28a745', color: 'white',
-                  border: '2px solid #ffffff', borderRadius: '8px',
-                  fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer',
-                  fontFamily: 'inherit', textTransform: 'uppercase'
-                }}
-              >
-                {t('levelScreen.iUnderstand')}
-              </button>
-            </div>
+            </ModalBody>
+            <Btn variant="green" onClick={() => setShowTutorial(false)}>{t('levelScreen.iUnderstand')}</Btn>
           </Modal>
         )}
 

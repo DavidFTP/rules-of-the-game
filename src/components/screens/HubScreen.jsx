@@ -39,7 +39,7 @@ export default function HubScreen({ onEnterLevel }) {
       <TopStrip config={null} state={null} />
 
       <div className={styles.canvasArea} ref={canvasAreaRef}>
-        <HubCanvas playerRef={playerRef} nearestDoor={nearestDoor} images={images} />
+        <HubCanvas playerRef={playerRef} nearestDoor={nearestDoor} images={images} isTouch={isTouch} dpadVisible={isTouch && dpadPos !== 'none'} onAction={() => movePlayer('Enter')} />
 
         {pendingDoor && (
           <RiddleModal
