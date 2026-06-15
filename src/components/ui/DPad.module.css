@@ -34,6 +34,7 @@
   grid-template-columns: repeat(3, 58px);
   grid-template-rows:    repeat(3, 58px);
   gap: 4px;
+  direction: ltr;
 }
 
 .btn {

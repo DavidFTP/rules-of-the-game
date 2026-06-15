@@ -2,11 +2,13 @@
   display: flex;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
 .side {
-  flex: 1;
+  width: clamp(0px, 10vw, 80px);
+  flex-shrink: 0;
   background: var(--bg);
   display: flex;
   align-items: center;
@@ -39,8 +41,9 @@
 }
 
 .field {
-  width: 80vw;
+  flex: 1;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--field-bg);
@@ -48,4 +51,14 @@
   overflow: hidden;
   box-shadow: var(--shadow);
   transition: background 0.5s;
+}
+
+@media (max-width: 500px) and (orientation: portrait) {
+  .side {
+    width: 0;
+    overflow: hidden;
+  }
+  .deco {
+    display: none;
+  }
 }
