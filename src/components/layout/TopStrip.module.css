@@ -1,7 +1,7 @@
 .strip {
   height: var(--top-strip-h);
   min-height: var(--top-strip-h);
-  background: var(--strip-bg);
+  background: rgba(13, 27, 42, 0.35);
   display: flex;
   align-items: center;
   padding: 0 16px;

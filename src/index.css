@@ -3,8 +3,7 @@
 :root {
   --bg:          #1a1a2e;
   --bg2:         #16213e;
-  --field-bg:    #0f3460;
-  --strip-bg:    #0d1b2a;
+  --field-bg:    rgba(15, 52, 96, 0.15);
   --accent:      #e94560;
   --gold:        #f5a623;
   --green:       #4caf50;

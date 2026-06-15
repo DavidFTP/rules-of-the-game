@@ -7,7 +7,8 @@ export default function PageShell({ children }) {
   const { t } = useLanguage()
 
   return (
-    <div className={styles.shell} style={{ backgroundImage: `url(${bgImage})` }}>
+    <div className={styles.shell}>
+      <div className={styles.bg} style={{ backgroundImage: `url(${bgImage})` }} />
       <aside className={styles.side} aria-hidden="true">
         <span className={styles.deco}>{t('sidebar.left')}</span>
       </aside>
