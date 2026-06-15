@@ -17,10 +17,23 @@
 
 .touchControls {
   position: absolute;
-  left: 50%;
   bottom: 12px;
-  transform: translateX(-50%);
   z-index: 10;
+}
+
+.touchControlsCenter {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.touchControlsLeft {
+  left: 12px;
+  transform: none;
+}
+
+.touchControlsRight {
+  right: 12px;
+  transform: none;
 }
 
 .touchControlsCoop {
@@ -76,6 +89,25 @@
 }
 
 .iconBtn:active { background: rgba(255,255,255,0.22); }
+
+.dpadToggleBtn {
+  height: 40px;
+  padding: 0 10px;
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 10px;
+  color: #ccc;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  font-family: var(--font-pixel);
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+.dpadToggleBtn:active {
+  background: rgba(255,255,255,0.22);
+}
 
 .actionBtn {
   background: rgba(255,255,255,0.09);

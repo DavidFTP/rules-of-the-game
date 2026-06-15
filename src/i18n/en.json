@@ -64,6 +64,7 @@
   "levelScreen.iUnderstand": "I Understand!",
   "levelScreen.p1": "P1",
   "levelScreen.p2": "P2",
+  "levelScreen.controls": "Controls",
   "levelScreen.returnToHub": "Return to hub",
   "levelScreen.undo": "Undo",
   "levelScreen.restart": "Restart",
@@ -73,6 +74,8 @@
   "riddle.enter": "Enter",
   "riddle.goBack": "Go Back",
   "riddle.notQuite": "✗ Not quite — ask your teacher for the hint!",
+
+  "hubScreen.controls": "Controls",
 
   "hubCanvas.pressToEnter": "Press E / tap ✦ to enter",
 

@@ -7,7 +7,6 @@ import styles from './HubCanvas.module.css'
 const GRID = hubMap.map(line => line.split(''))
 const MAP_COLS = GRID[0].length
 const MAP_ROWS = GRID.length
-const MAX_CS = 72
 const TARGET_CELLS = 13 * 9
 
 function computeViewport(containerW, containerH) {
@@ -16,7 +15,7 @@ function computeViewport(containerW, containerH) {
   let rows = Math.round(Math.sqrt(TARGET_CELLS / aspect))
   cols = Math.max(8, Math.min(20, cols, MAP_COLS))
   rows = Math.max(4, Math.min(MAP_ROWS, rows))
-  const cs = Math.min(MAX_CS, Math.min(containerW / cols, containerH / rows))
+  const cs = Math.min(containerW / cols, containerH / rows) * 0.9
   return { cs, vw: cols, vh: rows, cw: Math.round(cols * cs), ch: Math.round(rows * cs) }
 }
 

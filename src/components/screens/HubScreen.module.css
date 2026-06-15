@@ -13,8 +13,46 @@
 
 .touchControls {
   position: absolute;
-  left: 50%;
   bottom: 12px;
-  transform: translateX(-50%);
   z-index: 10;
+}
+
+.dpadToggleWrap {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  z-index: 10;
+}
+
+.dpadToggleBtn {
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  color: #ccc;
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  white-space: nowrap;
+}
+
+.dpadToggleBtn:active {
+  background: rgba(255,255,255,0.22);
+}
+
+.touchControlsCenter {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.touchControlsLeft {
+  left: 12px;
+  transform: none;
+}
+
+.touchControlsRight {
+  right: 12px;
+  transform: none;
 }

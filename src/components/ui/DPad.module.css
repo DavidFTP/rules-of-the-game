@@ -11,14 +11,14 @@
 
 .compact .label {
   font-family: var(--font-pixel);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
 }
 
 .compact .grid {
   display: grid;
-  grid-template-columns: repeat(3, 28px);
-  grid-template-rows:    repeat(3, 28px);
+  grid-template-columns: repeat(3, 34px);
+  grid-template-rows:    repeat(3, 34px);
   gap: 2px;
 }
 
@@ -40,9 +40,9 @@
 .btn {
   background: rgba(255,255,255,0.14);
   border: 1px solid rgba(255,255,255,0.24);
-  border-radius: 12px;
+  border-radius: 14px;
   color: #fff;
-  font-size: 22px;
+  font-size: 26px;
   display: flex;
   align-items: center;
   justify-content: center;

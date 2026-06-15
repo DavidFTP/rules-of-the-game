@@ -64,6 +64,7 @@
   "levelScreen.iUnderstand": "فهمت!",
   "levelScreen.p1": "اللاعب 1",
   "levelScreen.p2": "اللاعب 2",
+  "levelScreen.controls": "التحكم",
   "levelScreen.returnToHub": "العودة إلى المركز",
   "levelScreen.undo": "تراجع",
   "levelScreen.restart": "إعادة",
@@ -73,6 +74,8 @@
   "riddle.enter": "دخول",
   "riddle.goBack": "عودة",
   "riddle.notQuite": "✗ ليس صحيحاً — اسأل معلمك عن التلميح!",
+
+  "hubScreen.controls": "التحكم",
 
   "hubCanvas.pressToEnter": "اضغط E / انقر ✦ للدخول",
 

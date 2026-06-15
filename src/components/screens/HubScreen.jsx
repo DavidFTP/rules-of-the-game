@@ -11,9 +11,12 @@ import { useAssets } from '../../contexts/AssetContext.jsx'
 import { useLanguage } from '../../i18n/LanguageContext.jsx'
 import styles from './HubScreen.module.css'
 
+const DPAD_POSITIONS = ['center', 'left', 'right']
+
 export default function HubScreen({ onEnterLevel }) {
   const { t } = useLanguage()
   const [pendingDoor, setPendingDoor] = useState(null)
+  const [dpadPos, setDpadPos] = useState('center')
   const canvasAreaRef = useRef(null)
   const isTouch       = useTouchDevice()
   const { images } = useAssets()
@@ -21,6 +24,13 @@ export default function HubScreen({ onEnterLevel }) {
   const { playerRef, movePlayer, nearestDoor } = useHubPlayer(
     (door) => setPendingDoor(door)
   )
+
+  function cycleDpadPos() {
+    setDpadPos(prev => {
+      const idx = DPAD_POSITIONS.indexOf(prev)
+      return DPAD_POSITIONS[(idx + 1) % DPAD_POSITIONS.length]
+    })
+  }
 
   useSwipe(canvasAreaRef, movePlayer)
 
@@ -40,14 +50,26 @@ export default function HubScreen({ onEnterLevel }) {
         )}
 
         {isTouch && (
-          <div className={styles.touchControls}>
-            <DPad
-              compact
-              label={t('topStrip.moveLabel')}
-              onMove={movePlayer}
-              onAction={() => movePlayer('Enter')}
-            />
-          </div>
+          <>
+            <div className={`${styles.touchControls} ${styles['touchControls' + (dpadPos.charAt(0).toUpperCase() + dpadPos.slice(1))]}`}>
+              <DPad
+                compact
+                label={t('topStrip.moveLabel')}
+                onMove={movePlayer}
+                onAction={() => movePlayer('Enter')}
+              />
+            </div>
+            <div className={styles.dpadToggleWrap}>
+              <button
+                className={styles.dpadToggleBtn}
+                onTouchStart={e => { e.preventDefault(); cycleDpadPos() }}
+                onMouseDown={cycleDpadPos}
+                aria-label={t('hubScreen.controls')}
+              >
+                <span className={styles.dpadToggleLabel}>{t('hubScreen.controls')}</span>
+              </button>
+            </div>
+          </>
         )}
       </div>
 

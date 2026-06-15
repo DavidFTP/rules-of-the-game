@@ -28,7 +28,6 @@ function TokensStrip({ tokens }) {
         <span className={styles.icon}>🪙</span>
         <span>{tokens}</span>
       </div>
-      <span className={styles.hint}>{t('bottomStrip.controls')}</span>
     </div>
   )
 }
