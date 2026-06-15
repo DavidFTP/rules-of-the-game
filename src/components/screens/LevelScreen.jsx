@@ -14,13 +14,13 @@ import { useLanguage } from '../../i18n/LanguageContext.jsx'
 import LEVELS from '../../levels/index.js'
 import styles from './LevelScreen.module.css'
 
-const DPAD_POSITIONS = ['center', 'left', 'right']
+const DPAD_POSITIONS = ['none', 'center', 'left', 'right']
 
 export default function LevelScreen({ levelNum, onHub }) {
   const { t } = useLanguage()
   const levelData     = LEVELS[levelNum]
   const canvasAreaRef = useRef(null)
-  const [dpadPos, setDpadPos] = useState('center')
+  const [dpadPos, setDpadPos] = useState('none')
   const isTouch       = useTouchDevice()
   const { images } = useAssets()
 
@@ -210,8 +210,7 @@ export default function LevelScreen({ levelNum, onHub }) {
             {isTouch && !isCoop && (
               <button
                 className={styles.dpadToggleBtn}
-                onTouchStart={e => { e.preventDefault(); cycleDpadPos() }}
-                onMouseDown={cycleDpadPos}
+                onClick={cycleDpadPos}
                 aria-label={t('levelScreen.controls')}
               >
                 <span className={styles.dpadToggleLabel}>{t('levelScreen.controls')}</span>
@@ -255,13 +254,15 @@ export default function LevelScreen({ levelNum, onHub }) {
                 </div>
               </div>
             ) : (
-              <div className={`${styles.touchControls} ${styles['touchControls' + (dpadPos.charAt(0).toUpperCase() + dpadPos.slice(1))]}`}>
-                <DPad
-                  compact
-                  label={t('levelScreen.p1')}
-                  onMove={(k) => handleMove?.(k, 'playerPos')}
-                />
-              </div>
+              dpadPos !== 'none' && (
+                <div className={`${styles.touchControls} ${styles['touchControls' + (dpadPos.charAt(0).toUpperCase() + dpadPos.slice(1))]}`}>
+                  <DPad
+                    compact
+                    label={t('levelScreen.p1')}
+                    onMove={(k) => handleMove?.(k, 'playerPos')}
+                  />
+                </div>
+              )
             )}
           </>
         )}

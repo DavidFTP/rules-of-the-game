@@ -11,12 +11,12 @@ import { useAssets } from '../../contexts/AssetContext.jsx'
 import { useLanguage } from '../../i18n/LanguageContext.jsx'
 import styles from './HubScreen.module.css'
 
-const DPAD_POSITIONS = ['center', 'left', 'right']
+const DPAD_POSITIONS = ['none', 'center', 'left', 'right']
 
 export default function HubScreen({ onEnterLevel }) {
   const { t } = useLanguage()
   const [pendingDoor, setPendingDoor] = useState(null)
-  const [dpadPos, setDpadPos] = useState('center')
+  const [dpadPos, setDpadPos] = useState('none')
   const canvasAreaRef = useRef(null)
   const isTouch       = useTouchDevice()
   const { images } = useAssets()
@@ -51,19 +51,20 @@ export default function HubScreen({ onEnterLevel }) {
 
         {isTouch && (
           <>
-            <div className={`${styles.touchControls} ${styles['touchControls' + (dpadPos.charAt(0).toUpperCase() + dpadPos.slice(1))]}`}>
-              <DPad
-                compact
-                label={t('topStrip.moveLabel')}
-                onMove={movePlayer}
-                onAction={() => movePlayer('Enter')}
-              />
-            </div>
+            {dpadPos !== 'none' && (
+              <div className={`${styles.touchControls} ${styles['touchControls' + (dpadPos.charAt(0).toUpperCase() + dpadPos.slice(1))]}`}>
+                <DPad
+                  compact
+                  label={t('topStrip.moveLabel')}
+                  onMove={movePlayer}
+                  onAction={() => movePlayer('Enter')}
+                />
+              </div>
+            )}
             <div className={styles.dpadToggleWrap}>
               <button
                 className={styles.dpadToggleBtn}
-                onTouchStart={e => { e.preventDefault(); cycleDpadPos() }}
-                onMouseDown={cycleDpadPos}
+                onClick={cycleDpadPos}
                 aria-label={t('hubScreen.controls')}
               >
                 <span className={styles.dpadToggleLabel}>{t('hubScreen.controls')}</span>
