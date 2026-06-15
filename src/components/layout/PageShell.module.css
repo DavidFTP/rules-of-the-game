@@ -4,29 +4,21 @@
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
+  background: var(--bg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
 }
 
 .side {
   width: clamp(0px, 10vw, 80px);
   flex-shrink: 0;
-  background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   position: relative;
-}
-
-.side::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    repeating-linear-gradient(
-      45deg,
-      transparent, transparent 18px,
-      rgba(255,255,255,0.018) 18px, rgba(255,255,255,0.018) 19px
-    );
 }
 
 .deco {
@@ -38,6 +30,7 @@
   letter-spacing: 5px;
   user-select: none;
   pointer-events: none;
+  position: relative;
 }
 
 .field {
