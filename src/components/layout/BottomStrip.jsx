@@ -3,7 +3,7 @@ import styles from './BottomStrip.module.css'
 import { useLanguage } from '../../i18n/LanguageContext.jsx'
 import { ASSET_PATHS } from '../../config/spriteConfig.js'
 
-export default function BottomStrip({ config, state, tokenBag, purchases, onBuy, levelNum, roundIndex, totalRounds, moves }) {
+export default function BottomStrip({ config, state, tokenBag, purchases, onBuy, levelNum, roundIndex, totalRounds, moves, powerups, activePowerups, onActivatePowerup, isFinalRound }) {
   // Hub — empty strip
   if (!config) {
     return <div className={styles.strip} />
@@ -18,7 +18,19 @@ export default function BottomStrip({ config, state, tokenBag, purchases, onBuy,
       />
     )
   }
-  return <TokensStrip tokenBag={state?.tokenBag ?? {}} levelNum={levelNum} roundIndex={roundIndex} totalRounds={totalRounds} moves={moves} />
+  return (
+    <TokensStrip
+      tokenBag={state?.tokenBag ?? {}}
+      levelNum={levelNum}
+      roundIndex={roundIndex}
+      totalRounds={totalRounds}
+      moves={moves}
+      powerups={powerups}
+      activePowerups={activePowerups}
+      onActivatePowerup={onActivatePowerup}
+      isFinalRound={isFinalRound}
+    />
+  )
 }
 
 function CurrencyIcon({ type, className }) {
@@ -26,13 +38,14 @@ function CurrencyIcon({ type, className }) {
   return src ? <img src={src} alt="" className={className ?? styles.tokenIcon} /> : null
 }
 
-function TokensStrip({ tokenBag, levelNum, roundIndex, totalRounds, moves }) {
+function TokensStrip({ tokenBag, levelNum, roundIndex, totalRounds, moves, powerups, activePowerups, onActivatePowerup, isFinalRound }) {
   const { t } = useLanguage()
   const isLevel6 = false // level6 uses custom handling elsewhere
   const displayRound = isLevel6 ? (roundIndex > 0 ? 2 : 1) : ((roundIndex ?? 0) + 1)
   const displayTotal = isLevel6 ? 2 : totalRounds
 
   const entries = Object.entries(tokenBag).filter(([, v]) => v > 0)
+  const showPowerups = powerups && isFinalRound
 
   return (
     <div className={styles.strip}>
@@ -62,7 +75,25 @@ function TokensStrip({ tokenBag, levelNum, roundIndex, totalRounds, moves }) {
         )}
       </div>
 
-      <div className={styles.statGroup} style={{ marginInlineStart: 'auto' }}>
+      {showPowerups && powerups.map(pwr => {
+        const isActive = activePowerups?.includes(pwr.id)
+        const bagBlue = tokenBag['blue'] ?? 0
+        const canAfford = bagBlue >= pwr.cost
+        return (
+          <div key={pwr.id} className={`${styles.powerupBadge} ${canAfford ? styles.tempting : ''}`}>
+            <span className={styles.powerupName}>{t(pwr.nameKey ?? pwr.name)}</span>
+            <button
+              className={`${styles.buyBtn} ${isActive ? styles.bought : ''}`}
+              disabled={isActive || !canAfford}
+              onClick={() => onActivatePowerup?.(pwr.id, pwr.cost)}
+            >
+              {isActive ? '✓' : <><CurrencyIcon type="blue" className={styles.shopIcon} />{pwr.cost}</>}
+            </button>
+          </div>
+        )
+      })}
+
+      <div className={styles.statGroup} style={{ marginInlineStart: showPowerups ? '0' : 'auto' }}>
         <span className={styles.statLabel}>{t('bottomStrip.moves')}</span>
         <span className={styles.statValue}>{moves ?? 0}</span>
       </div>

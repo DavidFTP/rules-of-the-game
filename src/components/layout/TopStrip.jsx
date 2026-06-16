@@ -1,6 +1,7 @@
 import React from 'react'
 import styles from './TopStrip.module.css'
 import { useLanguage } from '../../i18n/LanguageContext.jsx'
+import logoSrc from '../../assets/logo.png'
 
 export default function TopStrip({ config, state, levelNum, restarts, roundIndex, totalRounds, onTutorialClick }) {
   const { t } = useLanguage()
@@ -15,7 +16,10 @@ export default function TopStrip({ config, state, levelNum, restarts, roundIndex
   if (isHub) {
     return (
       <div className={styles.strip}>
-        <span className={styles.title}>{t('topStrip.theWay')}</span>
+        <div className={styles.hubTitle}>
+          <img src={logoSrc} alt="" className={styles.logo} />
+          <span className={styles.hubTitleText}>{t('topStrip.rulesOfTheGame')}</span>
+        </div>
         <div className={styles.spacer} />
         <LangToggle />
       </div>

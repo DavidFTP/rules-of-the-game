@@ -12,7 +12,7 @@
   justify-content: center;
   position: relative;
   overflow: hidden;
-  background: rgba(15, 52, 96, 0.15);
+  background: transparent;
 }
 
 .touchControls {
@@ -77,10 +77,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: rgba(255,255,255,0.09);
-  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 10px;
-  color: #ccc;
+  color: #aaa;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
@@ -88,15 +88,15 @@
   font-size: 18px;
 }
 
-.iconBtn:active { background: rgba(255,255,255,0.22); }
+.iconBtn:active { background: rgba(0,0,0,0.55); }
 
 .dpadToggleBtn {
   height: 40px;
   padding: 0 10px;
-  background: rgba(255,255,255,0.09);
-  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 10px;
-  color: #ccc;
+  color: #aaa;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
@@ -106,14 +106,14 @@
 }
 
 .dpadToggleBtn:active {
-  background: rgba(255,255,255,0.22);
+  background: rgba(0,0,0,0.55);
 }
 
 .actionBtn {
-  background: rgba(255,255,255,0.09);
-  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 10px;
-  color: #ccc;
+  color: #aaa;
   padding: 8px 14px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -125,5 +125,5 @@
   font-size: 14px;
   min-width: 80px;
 }
-.actionBtn:active { background: rgba(255,255,255,0.22); }
+.actionBtn:active { background: rgba(0,0,0,0.55); }
 .actionBtn span:first-child { font-size: 22px; }

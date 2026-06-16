@@ -9,6 +9,7 @@
   flex: 1;
   position: relative;
   overflow: hidden;
+  background: transparent;
 }
 
 .touchControls {
@@ -27,9 +28,9 @@
 .dpadToggleBtn {
   font-family: var(--font-pixel);
   font-size: 11px;
-  color: #ccc;
-  background: rgba(255,255,255,0.09);
-  border: 1px solid rgba(255,255,255,0.18);
+  color: #aaa;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 10px;
   padding: 6px 10px;
   cursor: pointer;
@@ -39,7 +40,7 @@
 }
 
 .dpadToggleBtn:active {
-  background: rgba(255,255,255,0.22);
+  background: rgba(0,0,0,0.55);
 }
 
 .touchControlsCenter {

@@ -9,7 +9,7 @@
   --green:       #4caf50;
   --blue:        #2196f3;
   --top-strip-h: clamp(40px, 10vh, 120px);
-  --bot-strip-h: clamp(32px, 7vh, 80px);
+  --bot-strip-h: clamp(40px, 10vh, 120px);
   --cell:        52px;
   --radius:      8px;
   --shadow:      0 4px 24px rgba(0,0,0,0.55);

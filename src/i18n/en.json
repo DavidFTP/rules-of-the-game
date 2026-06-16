@@ -13,7 +13,7 @@
   "sidebar.left": "THE WAY • SOKOBAN • THE WAY • SOKOBAN •",
   "sidebar.right": "LEARN • GROW • PLAY • LEARN • GROW •",
 
-  "topStrip.theWay": "rules\nof the\ngame",
+  "topStrip.rulesOfTheGame": "rules of the game",
   "topStrip.lvl": "LVL {n}",
   "topStrip.defaultInstruction": "Use arrow keys to move. Push boxes onto the targets.",
   "topStrip.moves": "Moves: {n}",

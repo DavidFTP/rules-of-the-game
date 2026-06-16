@@ -307,37 +307,6 @@ export default function LevelScreen({ levelNum, onHub }) {
         )}
       </div>
 
-      {config?.powerups && state?.isFinalRound && (
-        <div style={{ 
-          display: 'flex', gap: '10px', justifyContent: 'center', 
-          padding: '10px', background: 'rgba(0,0,0,0.8)', borderTop: '2px solid #444' 
-        }}>
-          {config.powerups.map(pwr => {
-            const isActive = state.activePowerups?.includes(pwr.id)
-            const bag = state.tokenBag ?? {}
-            const canAfford = (bag['blue'] ?? 0) >= pwr.cost
-            return (
-              <button 
-                key={pwr.id}
-                onClick={() => activatePowerup(pwr.id, pwr.cost)}
-                disabled={isActive || !canAfford}
-                style={{
-                  padding: '8px 12px', borderRadius: '6px',
-                  border: isActive ? '2px solid #4CAF50' : (canAfford ? '2px solid #FFD700' : '2px solid #555'),
-                  backgroundColor: isActive ? '#1b4a1b' : '#222',
-                  color: isActive ? '#4CAF50' : (canAfford ? '#fff' : '#777'),
-                  cursor: (isActive || !canAfford) ? 'not-allowed' : 'pointer',
-                  fontWeight: 'bold'
-                }}
-              >
-                {t(pwr.nameKey ?? pwr.name)} <br/>
-                <span style={{ fontSize: '0.8rem', fontWeight: 'normal' }}>({pwr.cost} ✦)</span>
-              </button>
-            )
-          })}
-        </div>
-      )}
-
       <BottomStrip
         config={config}
         state={state}
@@ -348,6 +317,10 @@ export default function LevelScreen({ levelNum, onHub }) {
         roundIndex={roundIndex}
         totalRounds={totalRounds}
         moves={state?.moves ?? 0}
+        powerups={config?.powerups}
+        activePowerups={state?.activePowerups}
+        onActivatePowerup={activatePowerup}
+        isFinalRound={state?.isFinalRound}
       />
     </div>
   )

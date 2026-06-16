@@ -117,3 +117,30 @@
   flex-shrink: 0;
   margin-inline-end: 2px;
 }
+
+.powerupBadge {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 0.8em;
+  padding: 4px 8px;
+  font-family: var(--font-pixel);
+  color: var(--gold);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.powerupBadge.tempting {
+  border-color: var(--gold);
+  box-shadow: 0 0 6px rgba(245,166,35,0.3);
+}
+
+.powerupName {
+  font-size: 0.65em;
+  line-height: 1.15;
+  color: rgba(255,255,255,0.7);
+  white-space: nowrap;
+}
