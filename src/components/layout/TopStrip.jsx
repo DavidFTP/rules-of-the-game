@@ -35,13 +35,6 @@ export default function TopStrip({ config, state, levelNum, restarts, roundIndex
 
   return (
     <div className={styles.strip}>
-      <div className={styles.sideCol}>
-        <span className={styles.title}>{t('topStrip.lvl', { n: levelNum })}</span>
-        {displayTotal > 1 && (
-          <span className={styles.roundBadge}>{t('topStrip.round', { n: displayRound, total: displayTotal })}</span>
-        )}
-      </div>
-
       <div
         className={styles.centerArea}
         onClick={isClickable ? onTutorialClick : undefined}
@@ -52,7 +45,6 @@ export default function TopStrip({ config, state, levelNum, restarts, roundIndex
       </div>
 
       <div className={styles.sideCol}>
-        <span className={styles.meta}>{t('topStrip.moves', { n: state?.moves ?? 0 })}</span>
         <LangToggle />
       </div>
     </div>
@@ -86,16 +78,9 @@ function NarrativeStrip({ config }) {
 
 function MarqueeStrip({ config }) {
   const { t } = useLanguage()
-  const segKeys = config?.tutorialSegments ?? []
   return (
-    <div className={styles.marqueeWrap}>
-      <div className={styles.marqueeTrack}>
-        {segKeys.map((key, i) =>
-          key === 'CLUE'
-            ? <span key={i} className={styles.clue}>{t('topStrip.clue')}</span>
-            : <span key={i}>{t(key)}</span>
-        )}
-      </div>
+    <div className={styles.marqueeWrap} style={{ justifyContent: 'center' }}>
+      <span className={styles.readMe}>{t('topStrip.readMe')}</span>
     </div>
   )
 }

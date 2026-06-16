@@ -343,9 +343,11 @@ export default function LevelScreen({ levelNum, onHub }) {
         tokenBag={bag}
         purchases={purchases}
         onBuy={buy}
+        levelNum={levelNum}
         roundIndex={roundIndex}
         totalRounds={totalRounds}
         carriedTokens={carriedTokens}
+        moves={state?.moves ?? 0}
       />
     </div>
   )

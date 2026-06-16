@@ -66,3 +66,33 @@
   margin-inline-start: auto;
   flex-shrink: 0;
 }
+
+.statGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.statRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.statLabel {
+  font-family: var(--font-pixel);
+  font-size: 0.7em;
+  color: rgba(255,255,255,0.35);
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.statValue {
+  font-family: var(--font-pixel);
+  font-size: 1em;
+  color: var(--gold);
+  white-space: nowrap;
+  line-height: 1.3;
+}

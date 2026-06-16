@@ -2,9 +2,10 @@ import React from 'react'
 import styles from './BottomStrip.module.css'
 import { useLanguage } from '../../i18n/LanguageContext.jsx'
 
-export default function BottomStrip({ config, state, tokenBag, purchases, onBuy }) {
-  if (!config || config.bottomStripMode === 'tokens') {
-    return <TokensStrip tokens={state?.tokens ?? 0} />
+export default function BottomStrip({ config, state, tokenBag, purchases, onBuy, levelNum, roundIndex, totalRounds, moves }) {
+  // Hub — empty strip
+  if (!config) {
+    return <div className={styles.strip} />
   }
   if (config.bottomStripMode === 'shop') {
     return (
@@ -16,17 +17,38 @@ export default function BottomStrip({ config, state, tokenBag, purchases, onBuy 
       />
     )
   }
-  return <TokensStrip tokens={state?.tokens ?? 0} />
+  return <TokensStrip tokens={state?.tokens ?? 0} levelNum={levelNum} roundIndex={roundIndex} totalRounds={totalRounds} moves={moves} />
 }
 
-function TokensStrip({ tokens }) {
+function TokensStrip({ tokens, levelNum, roundIndex, totalRounds, moves }) {
   const { t } = useLanguage()
+  const isLevel6 = false // level6 uses custom handling elsewhere
+  const displayRound = isLevel6 ? (roundIndex > 0 ? 2 : 1) : ((roundIndex ?? 0) + 1)
+  const displayTotal = isLevel6 ? 2 : totalRounds
+
   return (
     <div className={styles.strip}>
-      <span className={styles.label}>{t('bottomStrip.tokens')}</span>
-      <div className={styles.badge}>
-        <span className={styles.icon}>🪙</span>
-        <span>{tokens}</span>
+      <div className={styles.statGroup}>
+        <div className={styles.statRow}>
+          <span className={styles.statLabel}>{t('bottomStrip.level')}</span>
+          <span className={styles.statValue}>{levelNum}</span>
+        </div>
+        {displayTotal > 1 && (
+          <>
+            <span className={styles.statLabel} style={{ marginTop: '3px' }}>{t('bottomStrip.round')}</span>
+            <span className={styles.statValue} style={{ fontSize: '0.85em' }}>{displayRound}/{displayTotal}</span>
+          </>
+        )}
+      </div>
+
+      <div className={styles.statGroup}>
+        <span className={styles.statLabel}>{t('bottomStrip.tokens')}</span>
+        <span className={styles.statValue}>{tokens}</span>
+      </div>
+
+      <div className={styles.statGroup} style={{ marginInlineStart: 'auto' }}>
+        <span className={styles.statLabel}>{t('bottomStrip.moves')}</span>
+        <span className={styles.statValue}>{moves ?? 0}</span>
       </div>
     </div>
   )

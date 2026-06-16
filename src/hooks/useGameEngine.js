@@ -246,16 +246,14 @@ const handleMove = useCallback((key, playerKey) => {
         if (justPlaced.length > 0) {
           next.placedOrder = [...(current.placedOrder ?? []), ...justPlaced.map(b => b.type)];
           
-          // 🚨 INSTANT LOSE CHECK! Did they place a box out of order?
+          // Deferred order check: only when ALL targets are filled
           const reqOrder = current.requiredOrder || cfg.requiredOrder;
-          if (reqOrder) {
-            for (let i = 0; i < next.placedOrder.length; i++) {
-              if (next.placedOrder[i] !== reqOrder[i]) {
-                console.log(`Box placed out of order! Expected ${reqOrder[i]}, but got ${next.placedOrder[i]}.`);
-                next._showOrderLose = true;
-                next.orderLoseMessageKey = 'engine.followRules';
-                break;
-              }
+          if (reqOrder && next.targets.every(t => next.boxes.some(b => b.r === t.r && b.c === t.c))) {
+            const recent = next.placedOrder.slice(-reqOrder.length);
+            const correct = recent.length === reqOrder.length && recent.every((v, i) => v === reqOrder[i]);
+            if (!correct) {
+              next._showOrderLose = true;
+              next.orderLoseMessageKey = 'engine.followRules';
             }
           }
 

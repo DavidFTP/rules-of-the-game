@@ -27,8 +27,12 @@
   "topStrip.defaultHint": "Think carefully before you push... every move counts.",
   "topStrip.tries": "Tries: {n}",
   "topStrip.moveLabel": "Move",
+  "topStrip.readMe": "Read Me",
 
-  "bottomStrip.tokens": "TOKENS",
+  "bottomStrip.level": "Lvl",
+  "bottomStrip.round": "Round",
+  "bottomStrip.tokens": "Tokens",
+  "bottomStrip.moves": "Moves",
   "bottomStrip.shop": "SHOP",
   "bottomStrip.controls": "↑↓←→ MOVE | Z UNDO | R RESTART | ESC HUB",
 
@@ -83,7 +87,7 @@
   "gameBoard.switchOff": "SW",
   "gameBoard.twoPlayersRequired": "2 Players Required!",
 
-  "engine.followRules": "Follow the rules! Box is not in the correct order!",
+  "engine.followRules": "Boxes are in the wrong order! Read the tutorial to learn the correct sequence.",
   "engine.truePathDisobey": "You chose the True Path, but disobeyed the order! (You must place Blue first, then Red).",
   "engine.trappedWestDoor": "You entered the West Door. It was the path of the world. Even though you solved the puzzle perfectly, you are trapped forever!",
 

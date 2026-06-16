@@ -27,8 +27,12 @@
   "topStrip.defaultHint": "فكّر جيداً قبل أن تدفع... كل حركة تهم.",
   "topStrip.tries": "المحاولات: {n}",
   "topStrip.moveLabel": "تحرك",
+  "topStrip.readMe": "اقرأني",
 
+  "bottomStrip.level": "المستوى",
+  "bottomStrip.round": "الجولة",
   "bottomStrip.tokens": "الرموز",
+  "bottomStrip.moves": "الحركات",
   "bottomStrip.shop": "المتجر",
   "bottomStrip.controls": "↑↓←→ تحرك | Z تراجع | R إعادة | ESC المركز",
 
@@ -83,7 +87,7 @@
   "gameBoard.switchOff": "مفتاح",
   "gameBoard.twoPlayersRequired": "يلزم لاعبان!",
 
-  "engine.followRules": "اتبع القواعد! الصندوق ليس في الترتيب الصحيح!",
+  "engine.followRules": "الصناديق بترتيب خاطئ! اقرأ الدرس لمعرفة التسلسل الصحيح.",
   "engine.truePathDisobey": "لقد اخترت الطريق الصحيح، ولكنك عصيت الترتيب! (يجب وضع الأزرق أولاً، ثم الأحمر).",
   "engine.trappedWestDoor": "لقد دخلت الباب الغربي. كان طريق العالم. على الرغم من أنك حللت اللغز بشكل مثالي، إلا أنك محبوس إلى الأبد!",
 
