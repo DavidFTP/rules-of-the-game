@@ -12,7 +12,8 @@ import { T } from './constants.js'
  *   '2'  player 2 start
  *   'C'  crack tile
  *   'S'  light switch
- *   '$'  coin / token pickup
+ *   '$'  coin / token pickup (alone → default currency from config)
+ *   '$b' blue coin, '$r' red coin, '$g' green coin, '$k' darkcoin
  *   'O'  box already on target (pre-solved)
  *   ' '  floor (space also treated as floor)
  *   'G'  gate
@@ -75,7 +76,16 @@ export function parseMap(mapLines, overrides = {}) {
           break
         case '$':
           row.push(T.FLOOR)
-          specials.push({ r, c, type: 'coin', amount: 10 })
+          const coinCol = c
+          const peek = line[c + 1]
+          if (peek && /^[brgk]$/i.test(peek)) {
+            const currencyMap = { b: 'blue', r: 'red', g: 'green', k: 'darkcoin' }
+            c++
+            row.push(T.FLOOR)
+            specials.push({ r, c: coinCol, type: 'coin', amount: 10, currency: currencyMap[peek.toLowerCase()] })
+          } else {
+            specials.push({ r, c: coinCol, type: 'coin', amount: 10 })
+          }
           break
         case 'G':
           row.push(T.WALL) 
@@ -108,7 +118,7 @@ export function parseMap(mapLines, overrides = {}) {
     targets:     resolvedTargets,
     specials,
     moves:       0,
-    tokens:      0,
+    tokenBag:    {},
     fogLifted:   false,
     simonStep:   0,
   }

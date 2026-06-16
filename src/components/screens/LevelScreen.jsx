@@ -38,7 +38,7 @@ export default function LevelScreen({ levelNum, onHub }) {
     restarts,
     roundIndex,
     totalRounds,
-    carriedTokens,
+    carriedBag,
     advanceRound,
     handleRestart,
     handleMove,
@@ -287,7 +287,7 @@ export default function LevelScreen({ levelNum, onHub }) {
           <RoundWinModal
             roundNum={completedRound + 1}
             totalRounds={totalRounds}
-            tokens={carriedTokens}
+            bag={carriedBag}
             onNext={() => { setShowRoundWin(false); setCompletedRound(null); advanceRound() }}
             onHub={onHub}
           />
@@ -295,7 +295,7 @@ export default function LevelScreen({ levelNum, onHub }) {
         {showLevelWin && (
           <WinModal
             levelNum={levelNum}
-            tokens={carriedTokens}
+            bag={carriedBag}
             onHub={() => { setShowLevelWin(false); onHub() }}
           />
         )}
@@ -314,7 +314,8 @@ export default function LevelScreen({ levelNum, onHub }) {
         }}>
           {config.powerups.map(pwr => {
             const isActive = state.activePowerups?.includes(pwr.id)
-            const canAfford = (state.tokens || 0) >= pwr.cost
+            const bag = state.tokenBag ?? {}
+            const canAfford = (bag['blue'] ?? 0) >= pwr.cost
             return (
               <button 
                 key={pwr.id}
@@ -330,7 +331,7 @@ export default function LevelScreen({ levelNum, onHub }) {
                 }}
               >
                 {t(pwr.nameKey ?? pwr.name)} <br/>
-                <span style={{ fontSize: '0.8rem', fontWeight: 'normal' }}>({pwr.cost} 🪙)</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 'normal' }}>({pwr.cost} ✦)</span>
               </button>
             )
           })}
@@ -346,7 +347,6 @@ export default function LevelScreen({ levelNum, onHub }) {
         levelNum={levelNum}
         roundIndex={roundIndex}
         totalRounds={totalRounds}
-        carriedTokens={carriedTokens}
         moves={state?.moves ?? 0}
       />
     </div>

@@ -1,6 +1,7 @@
 import React from 'react'
 import styles from './BottomStrip.module.css'
 import { useLanguage } from '../../i18n/LanguageContext.jsx'
+import { ASSET_PATHS } from '../../config/spriteConfig.js'
 
 export default function BottomStrip({ config, state, tokenBag, purchases, onBuy, levelNum, roundIndex, totalRounds, moves }) {
   // Hub — empty strip
@@ -17,14 +18,21 @@ export default function BottomStrip({ config, state, tokenBag, purchases, onBuy,
       />
     )
   }
-  return <TokensStrip tokens={state?.tokens ?? 0} levelNum={levelNum} roundIndex={roundIndex} totalRounds={totalRounds} moves={moves} />
+  return <TokensStrip tokenBag={state?.tokenBag ?? {}} levelNum={levelNum} roundIndex={roundIndex} totalRounds={totalRounds} moves={moves} />
 }
 
-function TokensStrip({ tokens, levelNum, roundIndex, totalRounds, moves }) {
+function CurrencyIcon({ type, className }) {
+  const src = ASSET_PATHS.currency?.[type]
+  return src ? <img src={src} alt="" className={className ?? styles.tokenIcon} /> : null
+}
+
+function TokensStrip({ tokenBag, levelNum, roundIndex, totalRounds, moves }) {
   const { t } = useLanguage()
   const isLevel6 = false // level6 uses custom handling elsewhere
   const displayRound = isLevel6 ? (roundIndex > 0 ? 2 : 1) : ((roundIndex ?? 0) + 1)
   const displayTotal = isLevel6 ? 2 : totalRounds
+
+  const entries = Object.entries(tokenBag).filter(([, v]) => v > 0)
 
   return (
     <div className={styles.strip}>
@@ -42,8 +50,16 @@ function TokensStrip({ tokens, levelNum, roundIndex, totalRounds, moves }) {
       </div>
 
       <div className={styles.statGroup}>
-        <span className={styles.statLabel}>{t('bottomStrip.tokens')}</span>
-        <span className={styles.statValue}>{tokens}</span>
+        {entries.length === 0 ? (
+          <span className={styles.statValue}>0</span>
+        ) : (
+          entries.map(([cur, amt]) => (
+            <div key={cur} className={styles.tokenRow}>
+              <CurrencyIcon type={cur} />
+              <span className={styles.statValue}>{amt}</span>
+            </div>
+          ))
+        )}
       </div>
 
       <div className={styles.statGroup} style={{ marginInlineStart: 'auto' }}>
@@ -68,7 +84,7 @@ function ShopStrip({ config, tokenBag, purchases, onBuy }) {
       <span className={styles.label}>{t('bottomStrip.shop')}</span>
       {allItems.map(item => {
         const bought    = purchases?.[item.key]
-        const currency  = item.currency ?? 'gold'
+        const currency  = item.currency ?? 'blue'
         const balance   = tokenBag?.[currency] ?? 0
         const affordable = balance >= item.cost
         return (
@@ -82,7 +98,7 @@ function ShopStrip({ config, tokenBag, purchases, onBuy }) {
               disabled={!affordable || !!bought}
               onClick={() => onBuy?.(item)}
             >
-              {bought ? '✓' : `${item.cost}🪙`}
+              {bought ? '✓' : <><CurrencyIcon type={currency} className={styles.shopIcon} />{item.cost}</>}
             </button>
           </div>
         )
@@ -90,8 +106,7 @@ function ShopStrip({ config, tokenBag, purchases, onBuy }) {
       <span className={styles.hint} style={{ marginInlineStart: 'auto' }}>
         {Object.entries(tokenBag ?? {})
           .filter(([, v]) => v > 0)
-          .map(([k, v]) => `${k}: ${v}`)
-          .join('  |  ')}
+          .map(([k, v]) => <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginInlineEnd: 6 }}><CurrencyIcon type={k} />{v}</span>)}
       </span>
     </div>
   )

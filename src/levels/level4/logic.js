@@ -4,6 +4,7 @@ export const config = {
   theme: 'level4',
   topStripMode: 'marquee',
   bottomStripMode: 'tokens',
+  currency: 'blue',
   coop: false,
   hasTutorialButton: true,
   tutorialKey: 'level4.tutorial',

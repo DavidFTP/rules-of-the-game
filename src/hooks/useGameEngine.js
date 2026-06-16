@@ -39,10 +39,20 @@ function buildStateForRound(levelData, roundIndex = 0) {
     finalBoxes = boxOverride;
   }
 
+  const levelConfig = { ...(levelData.config ?? {}), ...(round?.config ?? {}) };
+
+  // 3. Fill default currency on coins without an explicit one
+  const specials = parsed.specials.map(s =>
+    s.type === 'coin' && !s.currency
+      ? { ...s, currency: levelConfig.currency ?? 'blue' }
+      : s
+  );
+
   return {
     ...parsed,
-    boxes:        finalBoxes, // 👈 Injects the properly formatted array!
-    config:       { ...(levelData.config ?? {}), ...(round?.config ?? {}) },
+    specials,
+    boxes:        finalBoxes,
+    config:       levelConfig,
     fogLifted:    !(levelData.config?.fogOfWar),
     placedOrder:  [],
     simonStep:    0,
@@ -76,8 +86,8 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin, onEscapeReques
   const historyRef = useRef(history);
   historyRef.current = history;
   const [restarts,   setRestarts]   = useState(0)
-  // Tokens carry across rounds
-  const [carriedTokens, setCarriedTokens] = useState(0)
+  // Token bag carries across rounds
+  const [carriedBag, setCarriedBag] = useState({})
 
   const wonRef      = useRef(false)
   const roundWonRef = useRef(false)
@@ -88,7 +98,7 @@ export function useGameEngine(levelNum, { onRoundWin, onLevelWin, onEscapeReques
     wonRef.current      = false
     roundWonRef.current = false
     setRoundIndex(0)
-    setCarriedTokens(0)
+    setCarriedBag({})
     setHistory([])
     setRestarts(0)
     setState(buildStateForRound(LEVELS[levelNum], 0))
@@ -122,7 +132,7 @@ useEffect(() => {
     }
 
     roundWonRef.current = true;
-    setCarriedTokens(state.tokens ?? 0);
+    setCarriedBag(state.tokenBag ?? {});
 
     const isActuallyFinal = state.isFinalRound || (state.config?.theme === 'level6' && state.roundIndex > 0);
 
@@ -155,9 +165,9 @@ useEffect(() => {
       const fresh = buildStateForRound(ld, nextIdx);
       if (!fresh) return prev;
       
-      return { ...fresh, tokens: carriedTokens, chosenPath: path };
+      return { ...fresh, tokenBag: { ...carriedBag }, chosenPath: path };
     });
-  }, [levelNum, carriedTokens]);
+  }, [levelNum, carriedBag]);
   
   const handleRestart = useCallback(() => {
     wonRef.current      = false
@@ -165,7 +175,7 @@ useEffect(() => {
     setHistory([])
     setRestarts(r => r + 1)
     setRoundIndex(0)
-    setCarriedTokens(0)
+    setCarriedBag({})
     setState(() => buildStateForRound(LEVELS[levelNum], 0))
   }, [levelNum])
 
@@ -273,12 +283,14 @@ const handleMove = useCallback((key, playerKey) => {
   // --- FIX 1: INSTANT BOMB POWERUP ---
   const activatePowerup = useCallback((powerupId, cost) => {
     setState(current => {
+      const bag = current.tokenBag ?? {}
+      const balance = bag['blue'] ?? 0
       // Check if they can afford it and don't already have it
-      if ((current.tokens || 0) >= cost && !current.activePowerups?.includes(powerupId)) {
+      if (balance >= cost && !current.activePowerups?.includes(powerupId)) {
         
         let nextState = {
           ...current,
-          tokens: current.tokens - cost,
+          tokenBag: { ...bag, blue: balance - cost },
           activePowerups: [...(current.activePowerups || []), powerupId]
         };
 
@@ -330,7 +342,7 @@ const handleMove = useCallback((key, playerKey) => {
     roundIndex,
     totalRounds: state?.totalRounds ?? 1,
     isFinalRound: state?.isFinalRound ?? true,
-    carriedTokens,
+    carriedBag,
     advanceRound,
     handleRestart,
     handleMove,

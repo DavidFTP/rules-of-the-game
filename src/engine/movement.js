@@ -170,14 +170,17 @@ export function moveEntity(state, key, playerKey = 'playerPos', onBeforeBoxPush 
   // Coin collection
   const coinIdx = findSpecialAt(specials, nr, nc)
   if (coinIdx !== -1 && specials[coinIdx].type === 'coin') {
+    const coin = specials[coinIdx]
     const newSpecials = specials.filter((_, i) => i !== coinIdx)
     const dirMap = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }
     const newDir = dirMap[key] ?? pos.dir ?? 'down'
+    const cur = coin.currency ?? 'blue'
+    const amt = coin.amount ?? 10
     return {
       ...state,
       [playerKey]: { r: nr, c: nc, dir: newDir },
       specials: newSpecials,
-      tokens: state.tokens + (specials[coinIdx].amount ?? 10),
+      tokenBag: { ...state.tokenBag, [cur]: (state.tokenBag[cur] ?? 0) + amt },
       moves: state.moves + 1,
       _bump: false,
     }

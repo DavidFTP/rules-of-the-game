@@ -96,3 +96,24 @@
   white-space: nowrap;
   line-height: 1.3;
 }
+
+.tokenRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tokenIcon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.shopIcon {
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+  flex-shrink: 0;
+  margin-inline-end: 2px;
+}

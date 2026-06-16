@@ -158,7 +158,7 @@ function drawFrame(ctx, state, images, t) {
   ;(specials || []).forEach(s => {
     const inFog = visible && !visible.has(`${s.r},${s.c}`);
     if (!inFog && s.type === 'coin') {
-      drawCoin(ctx, s.c * CS, s.r * CS, images);
+      drawCoin(ctx, s.c * CS, s.r * CS, images, s.currency ?? 'blue');
     }
   });
 
@@ -408,11 +408,12 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath()
 }
 
-function drawCoin(ctx, x, y, images) {
+function drawCoin(ctx, x, y, images, currency = 'blue') {
   const cx = x + CS / 2;
   const cy = y + CS / 2;
-  if (images?.currency?.coin instanceof HTMLImageElement) {
-    ctx.drawImage(images.currency.coin, x + 8, y + 8, CS - 16, CS - 16)
+  const img = images?.currency?.[currency]
+  if (img instanceof HTMLImageElement) {
+    ctx.drawImage(img, x + 8, y + 8, CS - 16, CS - 16)
     return
   }
 
