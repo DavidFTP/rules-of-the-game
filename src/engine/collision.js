@@ -1,13 +1,17 @@
 import { T } from './constants.js'
 
 export function isWall(grid, r, c) {
-  if (r < 0 || c < 0 || r >= grid.length || c >= (grid[0]?.length ?? 0)) return true
-  return grid[r][c] === T.WALL
+  if (r < 0 || c < 0 || r >= grid.length) return true
+  const row = grid[r]
+  if (!row || c >= row.length) return true
+  return row[c] === T.WALL || row[c] === T.VOID
 }
 
 export function isCrack(grid, r, c) {
   if (r < 0 || c < 0 || r >= grid.length) return false
-  return grid[r][c] === T.CRACK
+  const row = grid[r]
+  if (!row || c >= row.length) return false
+  return row[c] === T.CRACK
 }
 
 export function isTarget(targets, r, c) {

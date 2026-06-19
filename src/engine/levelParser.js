@@ -15,7 +15,7 @@ import { T } from './constants.js'
  *   '$'  coin / token pickup (alone → default currency from config)
  *   '$b' blue coin, '$r' red coin, '$g' green coin, '$k' darkcoin
  *   'O'  box already on target (pre-solved)
- *   ' '  floor (space also treated as floor)
+ *   ' '  void / outside level (not drawn, impassable)
  *   'G'  gate
  *   'D'  destructible wall (looks like a normal wall but can be destroyed by the player)
  *   'E'  door
@@ -99,11 +99,21 @@ export function parseMap(mapLines, overrides = {}) {
           row.push(0); // 0 means walkable floor
           specials.push({ r, c, type: 'door' });
           break;
+        case ' ':
+          row.push(T.VOID)
+          break
         default:
           row.push(T.FLOOR)
       }
     }
     grid.push(row)
+  })
+
+  // Normalise grid to a rectangle: find max columns and pad shorter rows with VOID.
+  // This keeps the renderer safe (no jagged arrays) and ensures the canvas is sized correctly.
+  const maxCols = Math.max(...grid.map(r => r.length))
+  grid.forEach(row => {
+    while (row.length < maxCols) row.push(T.VOID)
   })
 
   // Normalize override-provided boxes/targets so they always include a `type`.

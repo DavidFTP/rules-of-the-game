@@ -1,12 +1,12 @@
-// W = Wall (#), P = Player, B = Box, T = Target
+// W = Wall (#), P = Player, B = Box, T = Target, '.' = Floor
 
 // Round 1: A simple room.
 export const r1Map = [
   '########',
-  '#      #',
-  '#      #',
-  '# P B T#',
-  '#      #',
+  '#......#',
+  '#......#',
+  '#.P.B.T#',
+  '#......#',
   '########',
 ];
 
@@ -14,20 +14,20 @@ export const r1Map = [
 // They will have to pace up and down in the space below the box 7 times!
 export const r2Map = [
   '#######',
-  '#  T  #',
-  '#  B  #',
-  '#  P  #',
-  '#     #',
-  '#     #',
+  '#..T..#',
+  '#..B..#',
+  '#..P..#',
+  '#.....#',
+  '#.....#',
   '#######',
 ];
 
 // Round 3: The Long Way Around
 export const r3Map = [
   '########',
-  '#  T   #',
-  '#      #',
-  '#  B   #',
-  '# P    #',
+  '#..T...#',
+  '#......#',
+  '#..B...#',
+  '#.P....#',
   '########',
 ];

@@ -1,4 +1,4 @@
-import { level2Map } from './map.js';
+import { lvl2_rnd1, lvl2_rnd2 } from './map.js';
 
 export const config = {
   theme: 'level2',
@@ -19,21 +19,14 @@ export const config = {
 
 export const rounds = [
   {
-    map: level2Map,
-    boxes: [
-      { r: 4, c: 9},
-      { r: 4, c: 11},
-      { r: 4, c: 13},
-    ],
-    targets: [
-      { r: 2, c: 9 },
-      { r: 2, c: 11 },
-      { r: 2, c: 13 },
-    ],
+    map: lvl2_rnd1,
     switches: [
       { r: 1, c: 1, id: 'light-switch' }
     ],
-    playerStart: { r: 6, c: 2 },
+    // isFinal: true,
+  },
+  {
+    map: lvl2_rnd2,
     isFinal: true,
   },
 ];

@@ -1,4 +1,4 @@
-import { round1Map, round2Map, round3Map } from './map.js';
+import { lvl1_rnd1, lvl1_rnd2, lvl1_rnd3 } from './map.js';
 
 export const config = {
   theme: 'level1',
@@ -21,11 +21,11 @@ export const config = {
 
 export const rounds = [
   {
-    map: round1Map,
+    map: lvl1_rnd1,
     playerStart: { r: 3, c: 3 },
   },
   {
-    map: round2Map,
+    map: lvl1_rnd2,
     boxes: [
       { r: 3, c: 2, type: 'brown', id: 'r2-green' },
       { r: 4, c: 7,  id: 'r2-blue'  },
@@ -37,7 +37,7 @@ export const rounds = [
     playerStart: { r: 5, c: 7 },
   },
   {
-    map: round3Map,
+    map: lvl1_rnd3,
     boxes: [
       { r: 5, c: 3,  type: 'blue',  id: 'r3-blue'  },
       { r: 5, c: 6,  type: 'grey',  id: 'r3-grey'  },

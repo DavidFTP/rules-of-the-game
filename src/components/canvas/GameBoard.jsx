@@ -184,6 +184,7 @@ function drawFrame(ctx, state, images, t) {
 
 function drawCell(ctx, type, r, c, inFog, specials, images, t) {
   const x = c * CS, y = r * CS
+  if (type == null || type === -1) return // VOID cells are not drawn
   if (inFog) {
     ctx.fillStyle = '#000'
     ctx.fillRect(x, y, CS, CS)

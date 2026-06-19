@@ -1,4 +1,5 @@
 export const T = {
+  VOID:   -1,
   FLOOR:   0,
   WALL:    1,
   TARGET:  2,

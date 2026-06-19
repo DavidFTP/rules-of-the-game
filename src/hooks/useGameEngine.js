@@ -59,7 +59,7 @@ function buildStateForRound(levelData, roundIndex = 0) {
     _simonFailed: false,
     roundIndex,
     totalRounds:  isMulti ? levelData.rounds.length : 1,
-    isFinalRound: isMulti ? roundIndex === levelData.rounds.length - 1 : true,
+    isFinalRound: isMulti ? (round?.isFinal ?? (roundIndex === levelData.rounds.length - 1)) : true,
     activePowerups: [],
   }
 }
