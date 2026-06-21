@@ -23,7 +23,7 @@ export const rounds = [
     switches: [
       { r: 1, c: 1, id: 'light-switch' }
     ],
-    // isFinal: true,
+    isFinal: true,
   },
   {
     map: lvl2_rnd2,
