@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import HubCanvas   from '../canvas/HubCanvas.jsx'
 import TopStrip    from '../layout/TopStrip.jsx'
 import BottomStrip from '../layout/BottomStrip.jsx'
@@ -33,6 +33,18 @@ export default function HubScreen({ onEnterLevel }) {
   }
 
   useSwipe(canvasAreaRef, movePlayer)
+
+  // Alt+N: directly enter a level without walking or riddles
+  useEffect(() => {
+    function handler(e) {
+      if (!e.altKey) return;
+      const num = parseInt(e.key);
+      if (num >= 1 && num <= 9) { e.preventDefault(); onEnterLevel(num); return; }
+      if (e.key === '0') { e.preventDefault(); onEnterLevel(10); }
+    }
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onEnterLevel])
 
   return (
     <div className={styles.wrap}>

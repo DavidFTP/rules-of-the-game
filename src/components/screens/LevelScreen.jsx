@@ -40,6 +40,7 @@ export default function LevelScreen({ levelNum, onHub }) {
     totalRounds,
     carriedBag,
     advanceRound,
+    jumpRound,
     handleRestart,
     handleMove,
     handleUndo,
@@ -73,6 +74,18 @@ export default function LevelScreen({ levelNum, onHub }) {
   const showCrack = !!state?._crackLose
 
   useSwipe(canvasAreaRef, (arrowKey) => handleMove?.(arrowKey, 'playerPos'))
+
+  // Alt+N: jump to a specific round number
+  useEffect(() => {
+    function handler(e) {
+      if (!e.altKey) return;
+      const num = parseInt(e.key);
+      if (num >= 1 && num <= 9) { e.preventDefault(); jumpRound(num); return; }
+      if (e.key === '0') { e.preventDefault(); jumpRound(10); }
+    }
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [jumpRound])
 
   if (!levelData) {
     return (

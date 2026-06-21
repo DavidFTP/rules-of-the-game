@@ -169,6 +169,23 @@ useEffect(() => {
     });
   }, [levelNum, carriedBag]);
   
+  /** Jump to a specific round by 1-based number (Alt+1 → round 1). */
+  const jumpRound = useCallback((roundNum) => {
+    setState(prev => {
+      const ld = LEVELS[levelNum];
+      const total = ld?.rounds?.length ?? 1;
+      const nextIdx = Math.max(0, Math.min(total - 1, roundNum - 1));
+      if (nextIdx === prev.roundIndex) return prev;
+      roundWonRef.current = false;
+      wonRef.current = false;
+      setRoundIndex(nextIdx);
+      setHistory([]);
+      const fresh = buildStateForRound(ld, nextIdx);
+      if (!fresh) return prev;
+      return { ...fresh, tokenBag: { ...carriedBag }, chosenPath: prev._triggeredDoor || prev.chosenPath };
+    });
+  }, [levelNum, carriedBag]);
+
   const handleRestart = useCallback(() => {
     wonRef.current      = false
     roundWonRef.current = false
@@ -344,6 +361,7 @@ const handleMove = useCallback((key, playerKey) => {
     isFinalRound: state?.isFinalRound ?? true,
     carriedBag,
     advanceRound,
+    jumpRound,
     handleRestart,
     handleMove,
     handleUndo,

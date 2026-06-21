@@ -81,7 +81,7 @@
 
   "hubScreen.controls": "Controls",
 
-  "hubCanvas.pressToEnter": "tap ✦ to enter",
+  "hubCanvas.pressToEnter": "press 'Enter' or ✦ to enter",
 
   "gameBoard.switchOn": "ON",
   "gameBoard.switchOff": "SW",

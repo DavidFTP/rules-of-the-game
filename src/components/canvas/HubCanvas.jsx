@@ -157,7 +157,7 @@ export default function HubCanvas({ playerRef, nearestDoor, images = null, isTou
         const dy = (near.row - camR) * cs - 8
         if (dx > 0 && dy > 0 && dx < cw && dy < ch) {
           ctx.fillStyle = 'rgba(0,0,0,0.75)'
-          ctx.fillRect(dx-85, dy-18, 170, 22)
+          ctx.fillRect(dx-140, dy-18, 280, 22)
           ctx.fillStyle = '#f5a623'
           ctx.font = 'bold 16px monospace'
           ctx.textAlign = 'center'
