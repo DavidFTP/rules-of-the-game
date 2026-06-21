@@ -1,20 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { hubMap, hubDoors } from '../../levels/hub/hubData.js'
+import { useEffect, useRef, useState } from 'react'
+import { hubGrid, hubDoors, HUB_COLS, HUB_ROWS } from '../../levels/hub/hubData.js'
 import { dirToSpriteKey } from '../../config/spriteConfig.js'
 import { useLanguage } from '../../i18n/LanguageContext.jsx'
 import styles from './HubCanvas.module.css'
 
-const GRID = hubMap.map(line => line.split(''))
-const MAP_COLS = GRID[0].length
-const MAP_ROWS = GRID.length
 const TARGET_CELLS = 13 * 9
 
 function computeViewport(containerW, containerH) {
   const aspect = containerW / containerH
   let cols = Math.round(Math.sqrt(TARGET_CELLS * aspect))
   let rows = Math.round(Math.sqrt(TARGET_CELLS / aspect))
-  cols = Math.max(8, Math.min(20, cols, MAP_COLS))
-  rows = Math.max(4, Math.min(MAP_ROWS, rows))
+  cols = Math.max(8, Math.min(20, cols, HUB_COLS))
+  rows = Math.max(4, Math.min(HUB_ROWS, rows))
   const cs = Math.min(containerW / cols, containerH / rows) * 0.9
   return { cs, vw: cols, vh: rows, cw: Math.round(cols * cs), ch: Math.round(rows * cs) }
 }
@@ -25,8 +22,8 @@ function getDoor(r, c) { return hubDoors.find(d => d.row === r && d.col === c) ?
 function getCameraOrigin(p, vw, vh) {
   let camC = p.c - Math.floor(vw / 2)
   let camR = p.r - Math.floor(vh / 2)
-  camC = Math.max(0, Math.min(camC, MAP_COLS - vw))
-  camR = Math.max(0, Math.min(camR, MAP_ROWS - vh))
+  camC = Math.max(0, Math.min(camC, HUB_COLS - vw))
+  camR = Math.max(0, Math.min(camR, HUB_ROWS - vh))
   return { camR, camC }
 }
 
@@ -81,9 +78,10 @@ export default function HubCanvas({ playerRef, nearestDoor, images = null, isTou
           const gc = camC + vc
           const x  = vc * cs
           const y  = vr * cs
-          if (gr < 0 || gc < 0 || gr >= GRID.length || gc >= GRID[0].length) continue
+          if (gr < 0 || gc < 0 || gr >= HUB_ROWS || gc >= (hubGrid[gr]?.length ?? 0)) continue
 
-          const cell = GRID[gr][gc]
+          const cell = hubGrid[gr][gc]
+          if (cell === ' ') continue // void — skip drawing entirely
 
           if (cell === '#') {
             if (images?.tiles?.wall instanceof HTMLImageElement) {

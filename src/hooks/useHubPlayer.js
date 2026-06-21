@@ -1,8 +1,6 @@
 import { useRef, useCallback } from 'react'
-import { hubMap, hubDoors, hubPlayerStart } from '../levels/hub/hubData.js'
+import { hubGrid, hubDoors, hubPlayerStart, HUB_ROWS } from '../levels/hub/hubData.js'
 import { useKeyboard } from './useKeyboard.js'
-
-const GRID = hubMap.map(line => line.split(''))
 
 const MOVE_DIRS = {
   ArrowUp:    { dr: -1, dc:  0 },
@@ -48,8 +46,8 @@ export function useHubPlayer(onEnterDoor) {
     const p  = playerRef.current
     const nr = p.r + mv.dr
     const nc = p.c + mv.dc
-    if (nr < 0 || nc < 0 || nr >= GRID.length || nc >= GRID[0].length) return
-    if (GRID[nr][nc] === '#') return
+    if (nr < 0 || nc < 0 || nr >= HUB_ROWS || nc >= (hubGrid[nr]?.length ?? 0)) return
+    if (hubGrid[nr][nc] === '#' || hubGrid[nr][nc] === ' ') return
     playerRef.current = { r: nr, c: nc, dir: dirMap[key] ?? p.dir }
   }, [nearestDoor, onEnterDoor])
 

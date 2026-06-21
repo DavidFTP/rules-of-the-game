@@ -1,4 +1,4 @@
-export const hubMap = [
+const rawMap = [
   '###################################################',
   '#.................................................#',
   '#.................................................#',
@@ -13,6 +13,24 @@ export const hubMap = [
   '#.................................................#',
   '###################################################',
 ]
+
+/**
+ * Normalize all rows to the same length by padding with spaces (void).
+ * Mirrors how levelParser pads shorter rows with T.VOID.
+ */
+function normalizeMap(lines) {
+  const grid = lines.map(line => [...line])
+  const maxCols = Math.max(...grid.map(r => r.length))
+  for (const row of grid) {
+    while (row.length < maxCols) row.push(' ')
+  }
+  return grid
+}
+
+export const hubMap = rawMap
+export const hubGrid = normalizeMap(rawMap)
+export const HUB_COLS = hubGrid[0].length
+export const HUB_ROWS = hubGrid.length
 
 export const hubDoors = [
   { id: 1,  col: 5,  row: 3,  labelKey: 'door.label'  },
